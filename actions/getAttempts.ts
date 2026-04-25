@@ -29,8 +29,8 @@ export async function getAttemptsWithTopicNames() {
         .from("attempts")
         .select(`
             *,
-            topics:topic_id ( name )
-        `) // This aliases the join specifically
+            topics:topic_id ( name, slug )
+        `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
