@@ -28,7 +28,7 @@ type AttemptResult = {
 
 export default async function ResultsPage({ params }: { params: { attemptId: string } }) {
   const supabase = await createServerSupabaseClient();
-  const { attemptId } = params;
+  const { attemptId } = await params;
 
   const { data } = await supabase
     .from("attempts")
@@ -57,7 +57,7 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
     );
   }
 
-  const typedData = data as AttemptResult;
+  const typedData = data as unknown as AttemptResult;
   const report = typedData.report_json;
   const topicName = typedData.topics?.name || "Technical Assessment";
   const retrySlug = typedData.topic_slug_snapshot || typedData.topics?.slug || "databases";
