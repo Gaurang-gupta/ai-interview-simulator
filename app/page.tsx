@@ -1,65 +1,82 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Sparkles, BrainCircuit, ShieldCheck } from "lucide-react";
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    return (
+        <div className="flex flex-col flex-1 items-center justify-center relative overflow-hidden">
+            {/* Hero Section */}
+            <main className="flex flex-col items-center justify-center w-full max-w-5xl px-6 py-24 text-center z-10">
+
+                {/* Animated Badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-sm font-medium mb-8 animate-fade-in">
+                    <Sparkles size={14} />
+                    <span>Powered by Advanced AI</span>
+                </div>
+
+                {/* Main Heading */}
+                <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 bg-clip-text bg-gradient-to-b from-white to-slate-400">
+                    Master any topic with <br />
+                    <span className="text-indigo-500">Intelligent Evaluation</span>
+                </h1>
+
+                <p className="max-w-2xl text-lg md:text-xl text-slate-400 mb-10 leading-relaxed">
+                    Generate custom assessments, track your conceptual progress, and receive
+                    AI-driven feedback to accelerate your learning journey.
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-20">
+                    <Link
+                        href="/dashboard"
+                        className="group flex h-14 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 text-white font-semibold transition-all hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/25"
+                    >
+                        Start Your First Test
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                    <Link
+                        href="/login"
+                        className="flex h-14 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-8 text-white font-semibold transition-all hover:bg-white/10 hover:border-white/20"
+                    >
+                        Sign In
+                    </Link>
+                </div>
+
+                {/* Features Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+                    <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
+                            <BrainCircuit size={20} />
+                        </div>
+                        <h3 className="text-white font-semibold mb-2">10-Question Precision</h3>
+                        <p className="text-sm text-slate-400 leading-relaxed">
+                            Curated assessments designed to test the depth of your understanding in exactly 10 questions.
+                        </p>
+                    </div>
+
+                    <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                        <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 mb-4">
+                            <Sparkles size={20} />
+                        </div>
+                        <h3 className="text-white font-semibold mb-2">Detailed Feedback</h3>
+                        <p className="text-sm text-slate-400 leading-relaxed">
+                            Get comprehensive scores, strength mapping, and a custom improvement plan for every attempt.
+                        </p>
+                    </div>
+
+                    <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+                            <ShieldCheck size={20} />
+                        </div>
+                        <h3 className="text-white font-semibold mb-2">Progress History</h3>
+                        <p className="text-sm text-slate-400 leading-relaxed">
+                            Every attempt is saved. Monitor your growth across different topics and difficulty levels.
+                        </p>
+                    </div>
+                </div>
+            </main>
+
+            {/* Decorative radial gradient for the bottom */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-500/10 blur-[120px] rounded-full -z-10" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    );
 }
