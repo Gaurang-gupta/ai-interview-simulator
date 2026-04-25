@@ -81,7 +81,7 @@ Rules:
     },
   ];
 
-  let { error: updateError } = await supabase
+  const { error: updateError } = await supabase
     .from("attempts")
     .update({
       status: "completed",
@@ -102,23 +102,6 @@ Rules:
       },
     })
     .eq("id", attemptId);
-
-  if (updateError?.code === "42703") {
-    ({ error: updateError } = await supabase
-      .from("attempts")
-      .update({
-        status: "completed",
-        score: Math.round(object.score),
-        report_json: {
-          strengths: object.strengths,
-          weaknesses: object.weaknesses,
-          improvement_plan: object.improvement_plan,
-          concept_scores: object.concept_scores,
-        },
-        qa_json: object.qa_feedback,
-      })
-      .eq("id", attemptId));
-  }
 
   if (updateError) throw updateError;
 

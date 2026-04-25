@@ -22,6 +22,7 @@ type AttemptResult = {
   topic_slug_snapshot: string | null;
   topics: {
     name: string;
+    slug?: string | null;
   } | null;
 };
 
@@ -38,7 +39,8 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
         topic_id,
         topic_slug_snapshot,
         topics (
-          name
+          name,
+          slug
         )
       `,
     )
@@ -58,7 +60,7 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
   const typedData = data as AttemptResult;
   const report = typedData.report_json;
   const topicName = typedData.topics?.name || "Technical Assessment";
-  const retrySlug = typedData.topic_slug_snapshot || "databases";
+  const retrySlug = typedData.topic_slug_snapshot || typedData.topics?.slug || "databases";
 
   return (
     <div className="min-h-screen px-6 py-12 bg-[#030712]">

@@ -84,21 +84,7 @@ Rules:
     },
   };
 
-  let { data, error } = await supabase.from("attempts").insert(payload).select("id").single();
-
-  if (error?.code === "42703") {
-    ({ data, error } = await supabase
-      .from("attempts")
-      .insert({
-        user_id: user.id,
-        topic_id: topic.id,
-        level: parsedLevel.data,
-        status: "in_progress",
-        qa_json: payload.qa_json,
-      })
-      .select("id")
-      .single());
-  }
+  const { data, error } = await supabase.from("attempts").insert(payload).select("id").single();
 
   if (error) throw error;
 
