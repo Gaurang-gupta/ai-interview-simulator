@@ -25,7 +25,7 @@ type AttemptResult = {
   topic_slug_snapshot: string | null;
   topics: {
     name: string;
-  } | null;
+  }[] | null;
 };
 
 export default async function ResultsPage({ params }: { params: { attemptId: string } }) {
@@ -58,9 +58,9 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
     );
   }
 
-  const typedData = data as AttemptResult;
+  const typedData = data as unknown as AttemptResult;
   const report = typedData.report_json;
-  const topicName = typedData.topics?.name || "Technical Assessment";
+  const topicName = typedData.topics?.[0]?.name || "Technical Assessment";
   const retrySlug = typedData.topic_slug_snapshot || "databases";
 
   return (

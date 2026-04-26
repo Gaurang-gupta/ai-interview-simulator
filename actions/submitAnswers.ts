@@ -84,7 +84,7 @@ Rules:
     },
   ];
 
-  const { error: updateError } = await supabase
+  let { error: updateError } = await supabase
     .from("attempts")
     .update({
       status: "completed",
