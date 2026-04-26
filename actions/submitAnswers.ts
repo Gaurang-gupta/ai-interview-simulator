@@ -65,6 +65,9 @@ Rules:
 - Score each answer out of 100
 - Reward correctness and conceptual depth
 - Penalize vague or incorrect statements
+- Provide confidence_score for overall evaluation reliability (0-100)
+- Add a 7-item next_7_day_plan (one action per day)
+- For each answer include rubric scores for correctness, depth, clarity, tradeoff_awareness
 `,
   });
 
@@ -91,9 +94,12 @@ Rules:
       model_name: EVALUATION_MODEL,
       prompt_version: EVALUATION_PROMPT_VERSION,
       report_json: {
+        overall_feedback: object.overall_feedback,
+        confidence_score: object.confidence_score,
         strengths: object.strengths,
         weaknesses: object.weaknesses,
         improvement_plan: object.improvement_plan,
+        next_7_day_plan: object.next_7_day_plan,
         concept_scores: object.concept_scores,
       },
       qa_json: object.qa_feedback,
@@ -102,6 +108,26 @@ Rules:
       },
     })
     .eq("id", attemptId);
+
+  if (updateError?.code === "42703") {
+    ({ error: updateError } = await supabase
+      .from("attempts")
+      .update({
+        status: "completed",
+        score: Math.round(object.score),
+        report_json: {
+          overall_feedback: object.overall_feedback,
+          confidence_score: object.confidence_score,
+          strengths: object.strengths,
+          weaknesses: object.weaknesses,
+          improvement_plan: object.improvement_plan,
+          next_7_day_plan: object.next_7_day_plan,
+          concept_scores: object.concept_scores,
+        },
+        qa_json: object.qa_feedback,
+      })
+      .eq("id", attemptId));
+  }
 
   if (updateError) throw updateError;
 

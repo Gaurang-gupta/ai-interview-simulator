@@ -14,21 +14,23 @@ import ScoreCircle from "@/components/ScoreCircle";
 type AttemptResult = {
   score: number;
   report_json: {
+    overall_feedback?: string;
+    confidence_score?: number;
     strengths?: string[];
     weaknesses?: string[];
     improvement_plan?: string[];
+    next_7_day_plan?: string[];
   };
   topic_id: string | null;
   topic_slug_snapshot: string | null;
   topics: {
     name: string;
-    slug?: string | null;
   } | null;
 };
 
 export default async function ResultsPage({ params }: { params: { attemptId: string } }) {
   const supabase = await createServerSupabaseClient();
-  const { attemptId } = await params;
+  const { attemptId } = params;
 
   const { data } = await supabase
     .from("attempts")
@@ -39,8 +41,7 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
         topic_id,
         topic_slug_snapshot,
         topics (
-          name,
-          slug
+          name
         )
       `,
     )
@@ -57,10 +58,10 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
     );
   }
 
-  const typedData = data as unknown as AttemptResult;
+  const typedData = data as AttemptResult;
   const report = typedData.report_json;
   const topicName = typedData.topics?.name || "Technical Assessment";
-  const retrySlug = typedData.topic_slug_snapshot || typedData.topics?.slug || "databases";
+  const retrySlug = typedData.topic_slug_snapshot || "databases";
 
   return (
     <div className="min-h-screen px-6 py-12 bg-[#030712]">
@@ -82,11 +83,22 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
             We&apos;ve analyzed your responses. Here is a breakdown of your technical proficiency and a roadmap for
             improvement.
           </p>
+          <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-2">
+            <span className="text-xs uppercase tracking-wider text-indigo-300 font-bold">Evaluator Confidence</span>
+            <span className="text-sm font-bold text-indigo-200">{report?.confidence_score ?? 0}%</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8 animate-slide-up">
             <section className="glass rounded-[2rem] p-8 relative overflow-hidden group border-white/5">
+              {report?.overall_feedback && (
+                <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                  <p className="text-xs uppercase tracking-wider text-indigo-300 font-bold mb-2">Overall Feedback</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">{report.overall_feedback}</p>
+                </div>
+              )}
+
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <CheckCircle2 size={120} />
               </div>
@@ -146,6 +158,20 @@ export default async function ResultsPage({ params }: { params: { attemptId: str
                   </div>
                 ))}
               </div>
+
+              {report?.next_7_day_plan && report.next_7_day_plan.length > 0 && (
+                <div className="mt-8 rounded-2xl border border-indigo-500/20 bg-black/20 p-4">
+                  <p className="text-xs uppercase tracking-wider text-indigo-300 font-bold mb-3">Next 7-Day Sprint</p>
+                  <ol className="space-y-2">
+                    {report.next_7_day_plan.map((step, i) => (
+                      <li key={i} className="text-xs text-slate-300 flex gap-2">
+                        <span className="text-indigo-300 font-semibold">Day {i + 1}:</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
 
               <div className="mt-10 p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-center flex flex-col items-center">
                 <Lightbulb size={24} className="text-yellow-500 mb-3" />

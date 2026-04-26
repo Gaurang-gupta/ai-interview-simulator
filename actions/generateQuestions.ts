@@ -52,6 +52,9 @@ Rules:
 - Questions should test real understanding
 - No explanations
 - No repetition
+- Include scenario-style questions that require tradeoff reasoning
+- Increase practical depth if prior performance was strong
+${adaptationContext}
 `,
   });
 
