@@ -29,9 +29,10 @@ export async function getAttemptsWithTopicNames() {
         .from("attempts")
         .select(`
             *,
-            topics:topic_id ( name )
-        `) // This aliases the join specifically
+            topics ( name )
+        `)
         .eq("user_id", user.id)
+        .eq("status", "completed")
         .order("created_at", { ascending: false });
 
     if (error) throw error;

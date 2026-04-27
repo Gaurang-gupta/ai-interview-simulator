@@ -1,169 +1,194 @@
 import { getAttemptsWithTopicNames } from "@/actions/getAttempts";
 import ProgressChart from "@/components/ProgressChart";
-import {
-    ArrowLeft, Clock, ChevronRight, BarChart3,
-    Target, TrendingUp, AlertTriangle, Brain
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, Target, TrendingUp, AlertTriangle, Brain } from "lucide-react";
 import Link from "next/link";
 
+type ConceptScore = {
+  concept: string;
+  score: number;
+};
+
+type AttemptHistoryRow = {
+  id: string;
+  score: number | null;
+  level: string;
+  status: string;
+  created_at: string;
+  report_json: {
+    concept_scores?: ConceptScore[];
+  } | null;
+  topics?: {
+    name?: string;
+  }[] | null;
+};
+
 export default async function HistoryPage() {
-    const attempts = await getAttemptsWithTopicNames();
+  const attempts = (await getAttemptsWithTopicNames()) as AttemptHistoryRow[];
+  const completedAttempts = attempts.filter((attempt) => attempt.status === "completed" && attempt.score !== null);
 
-    // 1. Concept Weakness Aggregation
-    const conceptAggregator: Record<string, { total: number; count: number }> = {};
+  const conceptAggregator: Record<string, { total: number; count: number }> = {};
 
-    attempts.forEach((attempt: any) => {
-        const scores = attempt.report_json?.concept_scores || [];
-        scores.forEach((cs: { concept: string; score: number }) => {
-            if (!conceptAggregator[cs.concept]) {
-                conceptAggregator[cs.concept] = { total: 0, count: 0 };
-            }
-            conceptAggregator[cs.concept].total += cs.score;
-            conceptAggregator[cs.concept].count += 1;
-        });
+  completedAttempts.forEach((attempt) => {
+    const scores = attempt.report_json?.concept_scores ?? [];
+    scores.forEach((cs) => {
+      if (!conceptAggregator[cs.concept]) {
+        conceptAggregator[cs.concept] = { total: 0, count: 0 };
+      }
+      conceptAggregator[cs.concept].total += cs.score;
+      conceptAggregator[cs.concept].count += 1;
     });
+  });
 
-    const weakConcepts = Object.entries(conceptAggregator)
-        .map(([name, stats]) => ({
-            name,
-            avg: Math.round(stats.total / stats.count)
-        }))
-        .filter(c => c.avg < 75) // Only show concepts below mastery threshold
-        .sort((a, b) => a.avg - b.avg) // Weakest first
-        .slice(0, 4); // Top 4 biggest gaps
+  const weakConcepts = Object.entries(conceptAggregator)
+    .map(([name, stats]) => ({
+      name,
+      avg: Math.round(stats.total / stats.count),
+    }))
+    .filter((concept) => concept.avg < 75)
+    .sort((a, b) => a.avg - b.avg)
+    .slice(0, 4);
 
-    // Grouping for Topic sections
-    const groupedAttempts = attempts.reduce((acc: any, curr: any) => {
-        const topicName = curr.topics?.name || "General Assessment";
-        if (!acc[topicName]) acc[topicName] = [];
-        acc[topicName].push(curr);
-        return acc;
-    }, {});
+  const groupedAttempts = completedAttempts.reduce<Record<string, AttemptHistoryRow[]>>((acc, current) => {
+    const topicName = current.topics?.[0]?.name || "General Assessment";
+    if (!acc[topicName]) acc[topicName] = [];
+    acc[topicName].push(current);
+    return acc;
+  }, {});
 
-    return (
-        <div className="min-h-screen max-w-5xl mx-auto px-6 py-12">
-            {/* Header */}
-            <div className="mb-12">
-                <Link href="/dashboard" className="group inline-flex items-center gap-2 text-slate-500 hover:text-white transition-colors mb-6">
-                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                    <span>Back to Dashboard</span>
-                </Link>
-                <h1 className="text-5xl font-black text-white tracking-tight">Analytics Hub</h1>
-            </div>
+  return (
+    <div className="min-h-screen max-w-5xl mx-auto px-6 py-12">
+      <div className="mb-12">
+        <Link href="/dashboard" className="group inline-flex items-center gap-2 text-slate-500 hover:text-white transition-colors mb-6">
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          <span>Back to Dashboard</span>
+        </Link>
+        <h1 className="text-5xl font-black text-white tracking-tight">Analytics Hub</h1>
+      </div>
 
-            {/* 🔥 Concept Weakness Tracker (Mastery Gaps) */}
-            {weakConcepts.length > 0 && (
-                <div className="mb-20 animate-in fade-in slide-in-from-top-4 duration-700">
-                    <div className="flex items-center gap-2 mb-6 text-orange-400">
-                        <Brain size={20} />
-                        <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Priority Knowledge Gaps</h2>
-                    </div>
+      {weakConcepts.length > 0 && (
+        <div className="mb-20 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-2 mb-6 text-orange-400">
+            <Brain size={20} />
+            <h2 className="text-sm font-bold uppercase tracking-[0.3em]">Priority Knowledge Gaps</h2>
+          </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {weakConcepts.map((concept) => (
-                            <div key={concept.name} className="glass p-5 rounded-2xl border-orange-500/20 bg-orange-500/[0.02] group hover:bg-orange-500/[0.05] transition-all">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                                        <AlertTriangle size={16} />
-                                    </div>
-                                    <span className="text-xl font-black text-orange-400">{concept.avg}%</span>
-                                </div>
-                                <h3 className="text-white font-bold text-sm leading-tight capitalize">{concept.name}</h3>
-                                <div className="w-full bg-white/5 h-1.5 rounded-full mt-4 overflow-hidden">
-                                    <div
-                                        className="bg-orange-500 h-full transition-all duration-1000"
-                                        style={{ width: `${concept.avg}%` }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {weakConcepts.map((concept) => (
+              <div
+                key={concept.name}
+                className="glass p-5 rounded-2xl border-orange-500/20 bg-orange-500/[0.02] group hover:bg-orange-500/[0.05] transition-all"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
+                    <AlertTriangle size={16} />
+                  </div>
+                  <span className="text-xl font-black text-orange-400">{concept.avg}%</span>
                 </div>
-            )}
-
-            {/* Topic-Based Sections */}
-            <div className="space-y-24">
-                {Object.entries(groupedAttempts).map(([topicName, topicAttempts]: [string, any]) => {
-                    // Logic for improvement indicator
-                    let improvement = 0;
-                    if (topicAttempts.length >= 2) {
-                        improvement = (topicAttempts[0].score || 0) - (topicAttempts[1].score || 0);
-                    }
-
-                    const topicBest = Math.max(...topicAttempts.map((a: any) => a.score || 0));
-                    const topicAvg = Math.round(topicAttempts.reduce((s: number, a: any) => s + (a.score || 0), 0) / topicAttempts.length);
-                    const topicChartData = topicAttempts.slice().reverse().map((a: any, i: number) => ({
-                        attempt: i + 1,
-                        score: a.score || 0
-                    }));
-
-                    return (
-                        <section key={topicName} className="animate-fade-in">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 mb-8 gap-4">
-                                <div>
-                                    <h2 className="text-3xl font-bold text-white capitalize tracking-tight">{topicName}</h2>
-                                    <div className="flex flex-wrap items-center gap-4 mt-2">
-                                        <p className="text-slate-500 text-sm flex items-center gap-2">
-                                            <Target size={14} className="text-indigo-500" />
-                                            {topicAttempts.length} Total Sessions
-                                        </p>
-                                        {topicAttempts.length >= 2 && (
-                                            <div className={`flex items-center gap-1 text-xs font-black uppercase tracking-wider ${
-                                                improvement >= 0 ? "text-emerald-400" : "text-rose-500"
-                                            }`}>
-                                                <TrendingUp size={14} className={improvement < 0 ? "rotate-180" : ""} />
-                                                <span>{improvement >= 0 ? "+" : ""}{improvement}% Trend</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex gap-10">
-                                    <div>
-                                        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Avg Score</p>
-                                        <p className="text-2xl font-bold text-white">{topicAvg}%</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Best Score</p>
-                                        <p className="text-2xl font-bold text-indigo-400">{topicBest}%</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="glass rounded-3xl p-8 mb-8 border-white/5">
-                                <div className="h-[250px] w-full">
-                                    <ProgressChart data={topicChartData} />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-2">
-                                {topicAttempts.map((a: any) => (
-                                    <Link
-                                        key={a.id}
-                                        href={`/results/${a.id}`}
-                                        className="group flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all"
-                                    >
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-xl font-black text-white group-hover:text-indigo-400 w-12 text-center">
-                                                {a.score}%
-                                            </div>
-                                            <div className="h-8 w-[1px] bg-white/10" />
-                                            <div>
-                                                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-white/10 text-slate-400">
-                                                    {a.level}
-                                                </span>
-                                                <p className="text-[11px] text-slate-600 mt-1 font-medium italic">
-                                                    {new Date(a.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={18} className="text-slate-700 group-hover:text-white" />
-                                    </Link>
-                                ))}
-                            </div>
-                        </section>
-                    );
-                })}
-            </div>
+                <h3 className="text-white font-bold text-sm leading-tight capitalize">{concept.name}</h3>
+                <div className="w-full bg-white/5 h-1.5 rounded-full mt-4 overflow-hidden">
+                  <div className="bg-orange-500 h-full transition-all duration-1000" style={{ width: `${concept.avg}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-    );
+      )}
+
+      {completedAttempts.length === 0 && (
+        <div className="glass rounded-3xl p-10 text-center border border-white/5">
+          <p className="text-slate-400 text-sm">No completed attempts yet. Finish one interview to unlock analytics.</p>
+        </div>
+      )}
+
+      <div className="space-y-24">
+        {Object.entries(groupedAttempts).map(([topicName, topicAttempts]) => {
+          let improvement = 0;
+          if (topicAttempts.length >= 2) {
+            improvement = (topicAttempts[0].score || 0) - (topicAttempts[1].score || 0);
+          }
+
+          const topicBest = Math.max(...topicAttempts.map((attempt) => attempt.score || 0));
+          const topicAvg = Math.round(
+            topicAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / topicAttempts.length,
+          );
+          const topicChartData = topicAttempts.slice().reverse().map((attempt, index) => ({
+            attempt: index + 1,
+            score: attempt.score || 0,
+            label: new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" }),
+          }));
+
+          return (
+            <section key={topicName} className="animate-fade-in">
+              <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 mb-8 gap-4">
+                <div>
+                  <h2 className="text-3xl font-bold text-white capitalize tracking-tight">{topicName}</h2>
+                  <div className="flex flex-wrap items-center gap-4 mt-2">
+                    <p className="text-slate-500 text-sm flex items-center gap-2">
+                      <Target size={14} className="text-indigo-500" />
+                      {topicAttempts.length} Total Sessions
+                    </p>
+                    {topicAttempts.length >= 2 && (
+                      <div
+                        className={`flex items-center gap-1 text-xs font-black uppercase tracking-wider ${
+                          improvement >= 0 ? "text-emerald-400" : "text-rose-500"
+                        }`}
+                      >
+                        <TrendingUp size={14} className={improvement < 0 ? "rotate-180" : ""} />
+                        <span>
+                          {improvement >= 0 ? "+" : ""}
+                          {improvement}% Trend
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-10">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Avg Score</p>
+                    <p className="text-2xl font-bold text-white">{topicAvg}%</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Best Score</p>
+                    <p className="text-2xl font-bold text-indigo-400">{topicBest}%</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass rounded-3xl p-8 mb-8 border-white/5">
+                <div className="h-[250px] w-full">
+                  <ProgressChart data={topicChartData} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {topicAttempts.map((attempt) => (
+                  <Link
+                    key={attempt.id}
+                    href={`/results/${attempt.id}`}
+                    className="group flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all"
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className="text-xl font-black text-white group-hover:text-indigo-400 w-12 text-center">
+                        {attempt.score}%
+                      </div>
+                      <div className="h-8 w-[1px] bg-white/10" />
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-white/10 text-slate-400">
+                          {attempt.level}
+                        </span>
+                        <p className="text-[11px] text-slate-600 mt-1 font-medium italic">
+                          {new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-700 group-hover:text-white" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
