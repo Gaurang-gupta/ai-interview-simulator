@@ -30,7 +30,7 @@ type AttemptResult = {
 
 export default async function ResultsPage({ params }: { params: { attemptId: string } }) {
   const supabase = await createServerSupabaseClient();
-  const { attemptId } = params;
+  const { attemptId } = await params;
 
   const { data } = await supabase
     .from("attempts")
