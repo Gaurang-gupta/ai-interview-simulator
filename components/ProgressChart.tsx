@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 type Props = {
-    data: { attempt: number; score: number }[];
+    data: { attempt: number; score: number; label: string }[];
 };
 
 export default function ProgressChart({ data }: Props) {
@@ -58,6 +58,11 @@ export default function ProgressChart({ data }: Props) {
                     />
 
                     <Tooltip
+                        labelFormatter={(value) => `Attempt ${value}`}
+                        formatter={(value, _name, payload) => [
+                            `${typeof value === "number" ? value : 0}%`,
+                            String(payload?.payload?.label ?? "Score"),
+                        ]}
                         contentStyle={{
                             backgroundColor: '#0f172a',
                             border: '1px solid rgba(255,255,255,0.1)',
