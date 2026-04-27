@@ -28,7 +28,7 @@ type AttemptResult = {
   }[] | null;
 };
 
-export default async function ResultsPage({ params }: { params: { attemptId: string } }) {
+export default async function ResultsPage({ params }: { params: Promise<{ attemptId: string }> }) {
   const supabase = await createServerSupabaseClient();
   const { attemptId } = await params;
 

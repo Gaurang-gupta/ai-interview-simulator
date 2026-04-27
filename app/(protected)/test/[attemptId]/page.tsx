@@ -31,12 +31,13 @@ export default function TestPage() {
       const supabase = createClient();
       const { data } = await supabase.from("attempts").select("qa_json").eq("id", attemptId).single();
 
-      if (data?.qa_json) {
-        const qs = (data.qa_json as QARecord[]).map((row) => row.question);
-        setQuestions(qs);
-        setAnswers(new Array(qs.length).fill(""));
-      }
+      if (!data?.qa_json) return;
+
+      const qs = (data.qa_json as QARecord[]).map((row) => row.question);
+      setQuestions(qs);
+      setAnswers(new Array(qs.length).fill(""));
     };
+
     fetchQuestions();
   }, [attemptId]);
 
@@ -57,13 +58,13 @@ export default function TestPage() {
 
   const handleNext = () => {
     if (current < questions.length - 1) {
-      setCurrent(current + 1);
+      setCurrent((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (current > 0) {
-      setCurrent(current - 1);
+      setCurrent((prev) => prev - 1);
     }
   };
 
@@ -137,10 +138,12 @@ export default function TestPage() {
                 </p>
               </div>
             </div>
-                            <div className="hidden md:flex items-center gap-2 text-slate-500 bg-white/5 px-4 py-2 rounded-full border border-white/5 text-sm">
-                                <Timer size={16} />
-                                <span>{mins}:{secs}</span>
-                            </div>
+            <div className="hidden md:flex items-center gap-2 text-slate-500 bg-white/5 px-4 py-2 rounded-full border border-white/5 text-sm">
+              <Timer size={16} />
+              <span>
+                {mins}:{secs}
+              </span>
+            </div>
           </div>
 
           <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -164,9 +167,7 @@ export default function TestPage() {
                 placeholder="Type your detailed response here..."
                 className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 h-64 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all resize-none leading-relaxed"
               />
-              <div className="absolute bottom-4 right-4 text-xs text-slate-600 font-mono">
-                Character Count: {answers[current].length}
-              </div>
+              <div className="absolute bottom-4 right-4 text-xs text-slate-600 font-mono">Character Count: {answers[current].length}</div>
             </div>
             {currentLength < MIN_ANSWER_LENGTH && (
               <p className="mt-3 text-xs text-amber-400">
@@ -217,10 +218,9 @@ export default function TestPage() {
               )}
             </div>
           </div>
+
           {elapsedSeconds < MIN_THINKING_SECONDS && (
-            <p className="text-xs text-amber-400 text-right">
-              You can submit in {MIN_THINKING_SECONDS - elapsedSeconds}s.
-            </p>
+            <p className="text-xs text-amber-400 text-right">You can submit in {MIN_THINKING_SECONDS - elapsedSeconds}s.</p>
           )}
         </main>
       </div>

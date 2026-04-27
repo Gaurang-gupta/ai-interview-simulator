@@ -89,7 +89,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
       .map((attempt, index) => ({
         attempt: index + 1,
         score: attempt.score || 0,
-        label: `${getTopicName(attempt)} · ${new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}`,
+        label: `${getTopicName(attempt)} · ${new Date(attempt.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}`,
       }));
   }, [completedAttempts]);
 
@@ -258,7 +258,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
             const topicChartData = topicAttempts.slice().reverse().map((attempt, index) => ({
               attempt: index + 1,
               score: attempt.score || 0,
-              label: new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" }),
+              label: new Date(attempt.created_at).toLocaleDateString("en-US", { dateStyle: "medium" }),
             }));
 
             return (
@@ -319,7 +319,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
                             {attempt.level}
                           </span>
                           <p className="text-[11px] text-slate-600 mt-1 font-medium italic">
-                            {new Date(attempt.created_at).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                            {new Date(attempt.created_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
                           </p>
                         </div>
                       </div>
