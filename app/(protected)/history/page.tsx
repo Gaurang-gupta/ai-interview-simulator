@@ -12,21 +12,23 @@ type AttemptHistoryRow = {
   id: string;
   score: number | null;
   level: string;
+  status: string;
   created_at: string;
   report_json: {
     concept_scores?: ConceptScore[];
   } | null;
   topics?: {
     name?: string;
-  } | null;
+  }[] | null;
 };
 
 export default async function HistoryPage() {
   const attempts = (await getAttemptsWithTopicNames()) as AttemptHistoryRow[];
+  const completedAttempts = attempts.filter((attempt) => attempt.status === "completed" && attempt.score !== null);
 
   const conceptAggregator: Record<string, { total: number; count: number }> = {};
 
-  attempts.forEach((attempt) => {
+  completedAttempts.forEach((attempt) => {
     const scores = attempt.report_json?.concept_scores ?? [];
     scores.forEach((cs) => {
       if (!conceptAggregator[cs.concept]) {
@@ -46,8 +48,8 @@ export default async function HistoryPage() {
     .sort((a, b) => a.avg - b.avg)
     .slice(0, 4);
 
-  const groupedAttempts = attempts.reduce<Record<string, AttemptHistoryRow[]>>((acc, current) => {
-    const topicName = current.topics?.name || "General Assessment";
+  const groupedAttempts = completedAttempts.reduce<Record<string, AttemptHistoryRow[]>>((acc, current) => {
+    const topicName = current.topics?.[0]?.name || "General Assessment";
     if (!acc[topicName]) acc[topicName] = [];
     acc[topicName].push(current);
     return acc;
@@ -92,6 +94,12 @@ export default async function HistoryPage() {
         </div>
       )}
 
+      {completedAttempts.length === 0 && (
+        <div className="glass rounded-3xl p-10 text-center border border-white/5">
+          <p className="text-slate-400 text-sm">No completed attempts yet. Finish one interview to unlock analytics.</p>
+        </div>
+      )}
+
       <div className="space-y-24">
         {Object.entries(groupedAttempts).map(([topicName, topicAttempts]) => {
           let improvement = 0;
@@ -106,6 +114,7 @@ export default async function HistoryPage() {
           const topicChartData = topicAttempts.slice().reverse().map((attempt, index) => ({
             attempt: index + 1,
             score: attempt.score || 0,
+            label: new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" }),
           }));
 
           return (
