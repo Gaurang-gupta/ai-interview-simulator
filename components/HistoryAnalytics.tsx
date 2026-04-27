@@ -319,7 +319,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
                             {attempt.level}
                           </span>
                           <p className="text-[11px] text-slate-600 mt-1 font-medium italic">
-                            {new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                            {new Date(attempt.created_at).toLocaleDateString("en-IN", { dateStyle: "medium" })}
                           </p>
                         </div>
                       </div>
