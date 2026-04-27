@@ -80,6 +80,18 @@ export default function TestPage() {
       setErrorMessage(`Answer ${firstInvalid + 1} must be at least ${MIN_ANSWER_LENGTH} characters.`);
       return;
     }
+  };
+
+  const handleSubmit = async () => {
+    const firstInvalid = answers.findIndex((answer) => answer.trim().length < MIN_ANSWER_LENGTH);
+    if (firstInvalid !== -1) {
+      setCurrent(firstInvalid);
+      setErrorMessage(`Answer ${firstInvalid + 1} must be at least ${MIN_ANSWER_LENGTH} characters.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
 
     setIsSubmitting(true);
     setErrorMessage(null);
