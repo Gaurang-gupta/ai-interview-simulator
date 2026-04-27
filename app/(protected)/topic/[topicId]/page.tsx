@@ -24,6 +24,7 @@ export default function TopicPage() {
 
   const [levels, setLevels] = useState<LevelStatus | null>(null);
   const [loadingLevel, setLoadingLevel] = useState<string | null>(null);
+  const [track, setTrack] = useState("general");
 
   useEffect(() => {
     getLevelStatus(topicSlug).then(setLevels);
@@ -32,7 +33,7 @@ export default function TopicPage() {
   const handleStart = async (level: string) => {
     setLoadingLevel(level);
     try {
-      const res = await generateQuestions(topicSlug, level);
+      const res = await generateQuestions(topicSlug, level, track);
       router.push(`/test/${res.attemptId}`);
     } catch (error) {
       console.error("Failed to generate questions", error);
@@ -107,6 +108,31 @@ export default function TopicPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-slide-up">
+          <div className="md:col-span-3 glass rounded-3xl p-6 border-white/10">
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-3">Interview Track</p>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { id: "general", label: "General" },
+                { id: "backend", label: "Backend" },
+                { id: "frontend", label: "Frontend" },
+                { id: "data", label: "Data" },
+                { id: "ml", label: "ML" },
+                { id: "sre", label: "SRE" },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setTrack(option.id)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                    track === option.id
+                      ? "bg-indigo-500/20 text-indigo-200 border border-indigo-400/30"
+                      : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {levelData.map((lvl) => (
             <div
               key={lvl.id}

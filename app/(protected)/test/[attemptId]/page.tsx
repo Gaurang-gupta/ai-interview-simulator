@@ -11,6 +11,7 @@ type QARecord = {
 };
 
 const MIN_ANSWER_LENGTH = 20;
+const MIN_THINKING_SECONDS = 60;
 
 export default function TestPage() {
   const params = useParams<{ attemptId: string }>();
@@ -22,6 +23,8 @@ export default function TestPage() {
   const [current, setCurrent] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [startedAt] = useState(() => Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -36,6 +39,14 @@ export default function TestPage() {
     };
     fetchQuestions();
   }, [attemptId]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [startedAt]);
 
   const handleChange = (value: string) => {
     const updated = [...answers];
@@ -57,12 +68,29 @@ export default function TestPage() {
   };
 
   const handleSubmit = async () => {
+    if (elapsedSeconds < MIN_THINKING_SECONDS) {
+      setErrorMessage(`Please spend at least ${MIN_THINKING_SECONDS} seconds before submitting.`);
+      return;
+    }
+
     const firstInvalid = answers.findIndex((answer) => answer.trim().length < MIN_ANSWER_LENGTH);
     if (firstInvalid !== -1) {
       setCurrent(firstInvalid);
       setErrorMessage(`Answer ${firstInvalid + 1} must be at least ${MIN_ANSWER_LENGTH} characters.`);
       return;
     }
+  };
+
+  const handleSubmit = async () => {
+    const firstInvalid = answers.findIndex((answer) => answer.trim().length < MIN_ANSWER_LENGTH);
+    if (firstInvalid !== -1) {
+      setCurrent(firstInvalid);
+      setErrorMessage(`Answer ${firstInvalid + 1} must be at least ${MIN_ANSWER_LENGTH} characters.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -88,6 +116,10 @@ export default function TestPage() {
 
   const progress = ((current + 1) / questions.length) * 100;
   const currentLength = answers[current]?.trim().length ?? 0;
+  const mins = Math.floor(elapsedSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (elapsedSeconds % 60).toString().padStart(2, "0");
 
   return (
     <div className="min-h-screen flex flex-col items-center px-6 py-12">
@@ -105,10 +137,10 @@ export default function TestPage() {
                 </p>
               </div>
             </div>
-            <div className="hidden md:flex items-center gap-2 text-slate-500 bg-white/5 px-4 py-2 rounded-full border border-white/5 text-sm">
-              <Timer size={16} />
-              <span>Active Session</span>
-            </div>
+                            <div className="hidden md:flex items-center gap-2 text-slate-500 bg-white/5 px-4 py-2 rounded-full border border-white/5 text-sm">
+                                <Timer size={16} />
+                                <span>{mins}:{secs}</span>
+                            </div>
           </div>
 
           <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
@@ -167,7 +199,7 @@ export default function TestPage() {
               ) : (
                 <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || elapsedSeconds < MIN_THINKING_SECONDS}
                   className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-lg shadow-indigo-500/20"
                 >
                   {isSubmitting ? (
@@ -185,6 +217,11 @@ export default function TestPage() {
               )}
             </div>
           </div>
+          {elapsedSeconds < MIN_THINKING_SECONDS && (
+            <p className="text-xs text-amber-400 text-right">
+              You can submit in {MIN_THINKING_SECONDS - elapsedSeconds}s.
+            </p>
+          )}
         </main>
       </div>
     </div>

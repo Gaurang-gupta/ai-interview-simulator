@@ -100,6 +100,52 @@ export default function HistoryAnalytics({ attempts }: Props) {
 
   const combinedBest = completedAttempts.length > 0 ? Math.max(...completedAttempts.map((attempt) => attempt.score || 0)) : 0;
 
+  const studyStreakDays = useMemo(() => {
+    const uniqueDays = Array.from(
+      new Set(completedAttempts.map((attempt) => new Date(attempt.created_at).toISOString().slice(0, 10))),
+    ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    if (uniqueDays.length === 0) return 0;
+
+    let streak = 0;
+    const cursor = new Date();
+    cursor.setUTCHours(0, 0, 0, 0);
+
+    for (const day of uniqueDays) {
+      const currentDay = new Date(day);
+      currentDay.setUTCHours(0, 0, 0, 0);
+      const diffDays = Math.round((cursor.getTime() - currentDay.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) {
+        streak += 1;
+        cursor.setUTCDate(cursor.getUTCDate() - 1);
+      } else if (diffDays === 1 && streak === 0) {
+        streak += 1;
+        cursor.setUTCDate(cursor.getUTCDate() - 2);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }, [completedAttempts]);
+
+  const weeklySummary = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    const weeklyAttempts = completedAttempts.filter((attempt) => new Date(attempt.created_at) >= sevenDaysAgo);
+    const avgScore =
+      weeklyAttempts.length > 0
+        ? Math.round(weeklyAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / weeklyAttempts.length)
+        : 0;
+
+    return {
+      attempts: weeklyAttempts.length,
+      avgScore,
+    };
+  }, [completedAttempts]);
+
   return (
     <>
       <div className="mb-8 flex items-center justify-end">
@@ -120,6 +166,19 @@ export default function HistoryAnalytics({ attempts }: Props) {
           >
             Combined
           </button>
+        </div>
+      </div>
+
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="glass rounded-2xl p-4 border-white/10">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Study Streak</p>
+          <p className="text-2xl font-black text-emerald-300 mt-1">{studyStreakDays} day{studyStreakDays === 1 ? "" : "s"}</p>
+        </div>
+        <div className="glass rounded-2xl p-4 border-white/10">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Weekly Summary</p>
+          <p className="text-sm text-slate-300 mt-1">
+            {weeklySummary.attempts} sessions in last 7 days · Avg {weeklySummary.avgScore}%
+          </p>
         </div>
       </div>
 

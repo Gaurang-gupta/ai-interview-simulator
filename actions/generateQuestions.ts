@@ -10,6 +10,7 @@ import { createRequestLogger } from "@/lib/logger";
 
 const QUESTION_MODEL = "gemini-2.5-flash";
 const QUESTION_PROMPT_VERSION = "v1";
+const DEFAULT_TRACK = "general";
 
 type QuestionItem = {
   question: string;
@@ -18,7 +19,7 @@ type QuestionItem = {
   score: number;
 };
 
-export async function generateQuestions(topicSlug: string, level: string) {
+export async function generateQuestions(topicSlug: string, level: string, track: string = DEFAULT_TRACK) {
   const logger = createRequestLogger("generateQuestions");
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
@@ -58,6 +59,7 @@ export async function generateQuestions(topicSlug: string, level: string) {
     topicSlug,
     topicId: topic.id,
     level: parsedLevel.data,
+    track,
     userId: user.id,
   });
 
@@ -69,6 +71,7 @@ Generate exactly 10 high-quality interview questions.
 
 Topic: ${topic.name}
 Level: ${parsedLevel.data}
+Role Track: ${track}
 
 Rules:
 - Questions should test real understanding
@@ -76,6 +79,7 @@ Rules:
 - No repetition
 - Include scenario-style questions that require tradeoff reasoning
 - Increase practical depth if prior performance was strong
+- Tailor wording and examples to the selected role track
 ${adaptationContext}
 `,
   });
@@ -104,6 +108,7 @@ ${adaptationContext}
           name: "attempt_started",
           timestamp: new Date().toISOString(),
           request_id: logger.requestId,
+          track,
         },
       ],
     },
@@ -137,6 +142,7 @@ ${adaptationContext}
     payload: {
       topic_slug: topic.slug,
       level: parsedLevel.data,
+      track,
       request_id: logger.requestId,
     },
   });
