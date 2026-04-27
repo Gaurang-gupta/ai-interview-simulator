@@ -12,28 +12,14 @@ type AttemptHistoryRow = {
   report_json: {
     concept_scores?: { concept: string; score: number }[];
   } | null;
-  topics?: {
-    name?: string;
-  }[] | null;
-};
-
-type ConceptScore = {
-  concept: string;
-  score: number;
-};
-
-type AttemptHistoryRow = {
-  id: string;
-  score: number | null;
-  level: string;
-  status: string;
-  created_at: string;
-  report_json: {
-    concept_scores?: ConceptScore[];
-  } | null;
-  topics?: {
-    name?: string;
-  }[] | null;
+  topics?:
+    | {
+        name?: string;
+      }
+    | {
+        name?: string;
+      }[]
+    | null;
 };
 
 export default async function HistoryPage() {

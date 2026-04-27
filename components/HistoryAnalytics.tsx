@@ -19,9 +19,14 @@ type AttemptHistoryRow = {
   report_json: {
     concept_scores?: ConceptScore[];
   } | null;
-  topics?: {
-    name?: string;
-  }[] | null;
+  topics?:
+    | {
+        name?: string;
+      }
+    | {
+        name?: string;
+      }[]
+    | null;
 };
 
 type Props = {
@@ -31,8 +36,14 @@ type Props = {
 export default function HistoryAnalytics({ attempts }: Props) {
   const [viewMode, setViewMode] = useState<"topic" | "combined">("topic");
 
+  const getTopicName = (attempt: AttemptHistoryRow) => {
+    if (!attempt.topics) return "General Assessment";
+    if (Array.isArray(attempt.topics)) return attempt.topics[0]?.name || "General Assessment";
+    return attempt.topics.name || "General Assessment";
+  };
+
   const completedAttempts = useMemo(
-    () => attempts.filter((attempt) => attempt.status === "completed" && attempt.score !== null),
+    () => attempts.filter((attempt) => attempt.score !== null),
     [attempts],
   );
 
@@ -63,7 +74,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
   const groupedAttempts = useMemo(
     () =>
       completedAttempts.reduce<Record<string, AttemptHistoryRow[]>>((acc, current) => {
-        const topicName = current.topics?.[0]?.name || "General Assessment";
+        const topicName = getTopicName(current);
         if (!acc[topicName]) acc[topicName] = [];
         acc[topicName].push(current);
         return acc;
@@ -78,7 +89,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
       .map((attempt, index) => ({
         attempt: index + 1,
         score: attempt.score || 0,
-        label: `${attempt.topics?.[0]?.name || "General"} · ${new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}`,
+        label: `${getTopicName(attempt)} · ${new Date(attempt.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}`,
       }));
   }, [completedAttempts]);
 
