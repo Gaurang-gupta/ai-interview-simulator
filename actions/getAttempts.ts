@@ -32,6 +32,7 @@ export async function getAttemptsWithTopicNames() {
             topics ( name )
         `)
         .eq("user_id", user.id)
+        .eq("status", "completed")
         .order("created_at", { ascending: false });
 
     if (error) throw error;
