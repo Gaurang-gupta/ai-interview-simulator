@@ -163,6 +163,7 @@ export default function TestPage() {
       const merged = currentAnswer ? `${currentAnswer} ${transcript}` : transcript;
       updateCurrentAnswer(merged);
     };
+  }, [attemptId]);
 
     recognition.onerror = () => {
       setVoiceError("Could not capture voice input. Please try again.");
