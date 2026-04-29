@@ -4,78 +4,150 @@ import { createServerSupabaseClient } from "@/lib/supabase_server";
 import { getCurrentUser } from "@/lib/auth";
 import { google } from "@/lib/ai";
 import { generateObject } from "ai";
-import { EvaluationSchema } from "@/lib/zodSchemas";
+import { AnswersSchema, EvaluationSchema } from "@/lib/zodSchemas";
+import { createRequestLogger } from "@/lib/logger";
+
+const EVALUATION_MODEL = "gemini-2.5-flash";
+const EVALUATION_PROMPT_VERSION = "v1";
+
+type AttemptQuestionRow = {
+  question: string;
+};
+
+type AttemptRecord = {
+  id: string;
+  user_id: string;
+  created_at: string;
+  qa_json: AttemptQuestionRow[];
+};
 
 export async function submitAnswers(attemptId: string, answers: string[]) {
-    try {
-        console.log("submitAnswers called");
-        console.log("attemptId:", attemptId);
-        console.log("answers:", answers);
+  const logger = createRequestLogger("submitAnswers");
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
 
-        const user = await getCurrentUser();
-        if (!user) throw new Error("Unauthorized");
+  const parsedAnswers = AnswersSchema.safeParse(answers);
+  if (!parsedAnswers.success) {
+    throw new Error(parsedAnswers.error.issues[0]?.message ?? "Invalid answers");
+  }
 
-        const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
-        const { data: attempt, error: fetchError } = await supabase
-            .from("attempts")
-            .select("*")
-            .eq("id", attemptId)
-            .single();
+  const { data: attempt, error: fetchError } = await supabase
+    .from("attempts")
+    .select("id, user_id, created_at, qa_json")
+    .eq("id", attemptId)
+    .single();
 
-        if (fetchError) {
-            console.error("Fetch error:", fetchError);
-            throw fetchError;
-        }
+  if (fetchError) throw fetchError;
 
-        if (attempt.user_id !== user.id) {
-            throw new Error("Forbidden");
-        }
+  const typedAttempt = attempt as AttemptRecord;
 
-        const questions = attempt.qa_json.map((q: any) => q.question);
+  if (typedAttempt.user_id !== user.id) {
+    throw new Error("Forbidden");
+  }
 
-        console.log("Calling AI...");
+  const questions = typedAttempt.qa_json.map((row) => row.question);
 
-        const { object } = await generateObject({
-            model: google("gemini-2.5-flash"),
-            schema: EvaluationSchema,
-            prompt: `
+  const { object } = await generateObject({
+    model: google(EVALUATION_MODEL),
+    schema: EvaluationSchema,
+    prompt: `
 Evaluate the following interview answers.
 
 Questions:
-${questions.map((q: string, i: number) => `${i + 1}. ${q}`).join("\n")}
+${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}
 
 Answers:
-${answers.map((a: string, i: number) => `${i + 1}. ${a}`).join("\n")}
-score each answer out of 100
+${parsedAnswers.data.map((a, i) => `${i + 1}. ${a}`).join("\n")}
+
+Rules:
+- Score each answer out of 100
+- Reward correctness and conceptual depth
+- Penalize vague or incorrect statements
+- Provide confidence_score for overall evaluation reliability (0-100)
+- Return evaluator_notes with concrete observations on answer quality
+- Add a 7-item next_7_day_plan (one action per day)
+- For each answer include rubric scores for correctness, depth, clarity, tradeoff_awareness
 `,
-        });
+  });
 
-        console.log("AI result:", object);
+  const now = new Date();
+  const started = new Date(typedAttempt.created_at);
+  const durationSeconds = Math.max(0, Math.round((now.getTime() - started.getTime()) / 1000));
 
-        const { error: updateError } = await supabase
-            .from("attempts")
-            .update({
-                status: "completed",
-                score: Math.round(object.score),
-                report_json: {
-                    strengths: object.strengths,
-                    weaknesses: object.weaknesses,
-                    improvement_plan: object.improvement_plan,
-                    concept_scores: object.concept_scores,
-                },
-                qa_json: object.qa_feedback,
-            })
-            .eq("id", attemptId);
+  const analyticsEvents = [
+    {
+      name: "attempt_submitted",
+      timestamp: now.toISOString(),
+      request_id: logger.requestId,
+      duration_seconds: durationSeconds,
+    },
+  ];
 
-        if (updateError) {
-            console.error("Update error:", updateError);
-            throw updateError;
-        }
+  let { error: updateError } = await supabase
+    .from("attempts")
+    .update({
+      status: "completed",
+      score: Math.round(object.score),
+      completed_at: now.toISOString(),
+      duration_seconds: durationSeconds,
+      model_name: EVALUATION_MODEL,
+      prompt_version: EVALUATION_PROMPT_VERSION,
+      report_json: {
+        overall_feedback: object.overall_feedback,
+        confidence_score: object.confidence_score,
+        evaluator_notes: object.evaluator_notes,
+        strengths: object.strengths,
+        weaknesses: object.weaknesses,
+        improvement_plan: object.improvement_plan,
+        next_7_day_plan: object.next_7_day_plan,
+        concept_scores: object.concept_scores,
+      },
+      qa_json: object.qa_feedback,
+      analytics_json: {
+        events: analyticsEvents,
+      },
+    })
+    .eq("id", attemptId);
 
-        return object;
-    } catch (err) {
-        console.error("SUBMIT ERROR:", err);
-        throw err;
-    }
+  if (updateError?.code === "42703") {
+    ({ error: updateError } = await supabase
+      .from("attempts")
+      .update({
+        status: "completed",
+        score: Math.round(object.score),
+        report_json: {
+          overall_feedback: object.overall_feedback,
+          confidence_score: object.confidence_score,
+          evaluator_notes: object.evaluator_notes,
+          strengths: object.strengths,
+          weaknesses: object.weaknesses,
+          improvement_plan: object.improvement_plan,
+          next_7_day_plan: object.next_7_day_plan,
+          concept_scores: object.concept_scores,
+        },
+        qa_json: object.qa_feedback,
+      })
+      .eq("id", attemptId));
+  }
+
+  if (updateError) throw updateError;
+
+  const { error: eventError } = await supabase.from("attempt_events").insert({
+    attempt_id: attemptId,
+    user_id: user.id,
+    event_name: "attempt_completed",
+    payload: {
+      request_id: logger.requestId,
+      duration_seconds: durationSeconds,
+      score: Math.round(object.score),
+    },
+  });
+
+  if (eventError) {
+    logger.warn("Failed to persist attempt_completed event", { error: eventError.message });
+  }
+
+  return object;
 }
