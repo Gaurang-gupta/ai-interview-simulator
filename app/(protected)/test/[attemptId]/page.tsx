@@ -4,7 +4,7 @@ import { submitAnswers } from "@/actions/submitAnswers";
 import { createClient } from "@/lib/supabase_client";
 import { BrainCircuit, CheckCircle2, ChevronRight, Loader2, Timer } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -16,6 +16,7 @@ declare global {
       onerror: (() => void) | null;
       onend: (() => void) | null;
       start: () => void;
+      stop: () => void;
     };
     SpeechRecognition?: new () => {
       lang: string;
@@ -25,6 +26,7 @@ declare global {
       onerror: (() => void) | null;
       onend: (() => void) | null;
       start: () => void;
+      stop: () => void;
     };
   }
 }
@@ -62,6 +64,9 @@ export default function TestPage() {
   const [voiceMode, setVoiceMode] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const recognitionRef = useRef<{
+    stop?: () => void;
+  } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -143,6 +148,11 @@ export default function TestPage() {
     setSubmitError(null);
   };
 
+  const stopVoiceInput = () => {
+    recognitionRef.current?.stop?.();
+    setIsListening(false);
+  };
+
   const handleVoiceInput = () => {
     const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!Recognition) {
@@ -160,8 +170,13 @@ export default function TestPage() {
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
       if (!transcript) return;
-      const merged = currentAnswer ? `${currentAnswer} ${transcript}` : transcript;
-      updateCurrentAnswer(merged);
+      setAnswers((prevAnswers) => {
+        const nextAnswers = [...prevAnswers];
+        const existingAnswer = nextAnswers[currentQuestionIndex] ?? "";
+        nextAnswers[currentQuestionIndex] = existingAnswer ? `${existingAnswer} ${transcript}` : transcript;
+        return nextAnswers;
+      });
+      setSubmitError(null);
     };
   }, [attemptId]);
 
@@ -174,8 +189,20 @@ export default function TestPage() {
       setIsListening(false);
     };
 
+    recognitionRef.current = recognition;
     recognition.start();
   };
+
+  useEffect(() => {
+    if (voiceMode) return;
+    stopVoiceInput();
+  }, [voiceMode]);
+
+  useEffect(() => {
+    return () => {
+      stopVoiceInput();
+    };
+  }, []);
 
   const goToPrevious = () => {
     setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
@@ -290,11 +317,10 @@ export default function TestPage() {
                 {voiceMode && (
                   <button
                     type="button"
-                    onClick={handleVoiceInput}
-                    disabled={isListening}
+                    onClick={isListening ? stopVoiceInput : handleVoiceInput}
                     className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10 disabled:opacity-60"
                   >
-                    {isListening ? "Listening..." : "Dictate Answer"}
+                    {isListening ? "Stop Listening" : "Dictate Answer"}
                   </button>
                 )}
               </div>
