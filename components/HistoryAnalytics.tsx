@@ -146,6 +146,43 @@ export default function HistoryAnalytics({ attempts }: Props) {
     };
   }, [completedAttempts]);
 
+  const weeklyGoalTarget = 5;
+  const weeklyGoalProgress = Math.min(100, Math.round((weeklySummary.attempts / weeklyGoalTarget) * 100));
+
+  const conceptMasterySeries = useMemo(() => {
+    const conceptMap: Record<string, number[]> = {};
+
+    completedAttempts
+      .slice()
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .forEach((attempt) => {
+        (attempt.report_json?.concept_scores ?? []).forEach(({ concept, score }) => {
+          if (!conceptMap[concept]) conceptMap[concept] = [];
+          conceptMap[concept].push(score);
+        });
+      });
+
+    return Object.entries(conceptMap)
+      .map(([concept, scores]) => ({
+        concept,
+        points: scores.map((score, index) => ({ attempt: index + 1, score })),
+        latest: scores[scores.length - 1] ?? 0,
+      }))
+      .sort((a, b) => a.latest - b.latest)
+      .slice(0, 3);
+  }, [completedAttempts]);
+
+  const weeklySummaryMailto = useMemo(() => {
+    const subject = encodeURIComponent("AI Prep Weekly Learning Summary");
+    const body = encodeURIComponent(
+      `This week I completed ${weeklySummary.attempts} interview sessions with an average score of ${weeklySummary.avgScore}%.\n` +
+        `Current streak: ${studyStreakDays} day(s).\n` +
+        `Weekly goal progress: ${weeklySummary.attempts}/${weeklyGoalTarget} sessions.\n` +
+        `Priority weak concepts: ${weakConcepts.map((item) => `${item.name} (${item.avg}%)`).join(", ") || "N/A"}.`,
+    );
+    return `mailto:?subject=${subject}&body=${body}`;
+  }, [weeklyGoalTarget, weeklySummary.attempts, weeklySummary.avgScore, studyStreakDays, weakConcepts]);
+
   return (
     <>
       <div className="mb-8 flex items-center justify-end">
@@ -181,6 +218,47 @@ export default function HistoryAnalytics({ attempts }: Props) {
           </p>
         </div>
       </div>
+
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="glass rounded-2xl p-4 border-white/10">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Completion Goal</p>
+          <p className="mt-1 text-sm text-slate-300">
+            {weeklySummary.attempts}/{weeklyGoalTarget} sessions this week
+          </p>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-full bg-indigo-500 transition-all duration-700" style={{ width: `${weeklyGoalProgress}%` }} />
+          </div>
+        </div>
+        <div className="glass rounded-2xl p-4 border-white/10">
+          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Weekly Summary Email</p>
+          <p className="mt-1 text-sm text-slate-400">Generate a prefilled weekly check-in email draft.</p>
+          <a
+            href={weeklySummaryMailto}
+            className="mt-3 inline-flex rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+          >
+            Open Email Draft
+          </a>
+        </div>
+      </div>
+
+      {conceptMasterySeries.length > 0 && (
+        <div className="mb-10 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {conceptMasterySeries.map((series) => (
+            <div key={series.concept} className="glass rounded-2xl border border-white/10 p-4">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">{series.concept}</p>
+              <div className="h-[180px] w-full">
+                <ProgressChart
+                  data={series.points.map((point) => ({
+                    attempt: point.attempt,
+                    score: point.score,
+                    label: `${series.concept} · Attempt ${point.attempt}`,
+                  }))}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {weakConcepts.length > 0 && (
         <div className="mb-20 animate-in fade-in slide-in-from-top-4 duration-700">

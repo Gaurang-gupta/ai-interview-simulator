@@ -6,6 +6,29 @@ import { BrainCircuit, CheckCircle2, ChevronRight, Loader2, Timer } from "lucide
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+declare global {
+  interface Window {
+    webkitSpeechRecognition?: new () => {
+      lang: string;
+      interimResults: boolean;
+      maxAlternatives: number;
+      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      onend: (() => void) | null;
+      start: () => void;
+    };
+    SpeechRecognition?: new () => {
+      lang: string;
+      interimResults: boolean;
+      maxAlternatives: number;
+      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      onend: (() => void) | null;
+      start: () => void;
+    };
+  }
+}
+
 type AttemptQuestionRecord = {
   question: string;
 };
@@ -36,6 +59,9 @@ export default function TestPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -115,6 +141,40 @@ export default function TestPage() {
       return nextAnswers;
     });
     setSubmitError(null);
+  };
+
+  const handleVoiceInput = () => {
+    const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!Recognition) {
+      setVoiceError("Voice mode is not supported in this browser.");
+      return;
+    }
+
+    setVoiceError(null);
+    const recognition = new Recognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    setIsListening(true);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
+      if (!transcript) return;
+      const merged = currentAnswer ? `${currentAnswer} ${transcript}` : transcript;
+      updateCurrentAnswer(merged);
+    };
+  }, [attemptId]);
+
+    recognition.onerror = () => {
+      setVoiceError("Could not capture voice input. Please try again.");
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
   };
 
   const goToPrevious = () => {
@@ -217,6 +277,28 @@ export default function TestPage() {
             </h3>
 
             <div className="relative">
+              <div className="mb-3 flex items-center justify-between">
+                <label className="flex items-center gap-2 text-xs text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={voiceMode}
+                    onChange={(event) => setVoiceMode(event.target.checked)}
+                    className="h-4 w-4 rounded border-white/20 bg-black/30"
+                  />
+                  Voice response mode
+                </label>
+                {voiceMode && (
+                  <button
+                    type="button"
+                    onClick={handleVoiceInput}
+                    disabled={isListening}
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10 disabled:opacity-60"
+                  >
+                    {isListening ? "Listening..." : "Dictate Answer"}
+                  </button>
+                )}
+              </div>
+
               <textarea
                 value={currentAnswer}
                 onChange={(event) => updateCurrentAnswer(event.target.value)}
@@ -225,6 +307,7 @@ export default function TestPage() {
               />
               <div className="absolute bottom-4 right-4 font-mono text-xs text-slate-600">Character Count: {currentAnswer.length}</div>
             </div>
+            {voiceError && <p className="mt-2 text-xs text-amber-400">{voiceError}</p>}
 
             {currentAnswerLength < MIN_ANSWER_LENGTH && (
               <p className="mt-3 text-xs text-amber-400">

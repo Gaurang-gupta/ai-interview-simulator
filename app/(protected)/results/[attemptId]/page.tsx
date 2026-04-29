@@ -16,6 +16,7 @@ type AttemptResult = {
   report_json: {
     overall_feedback?: string;
     confidence_score?: number;
+    evaluator_notes?: string[];
     strengths?: string[];
     weaknesses?: string[];
     improvement_plan?: string[];
@@ -92,6 +93,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ attemp
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8 animate-slide-up">
             <section className="glass rounded-[2rem] p-8 relative overflow-hidden group border-white/5">
+              {report?.evaluator_notes && report.evaluator_notes.length > 0 && (
+                <div className="mb-6 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.04] p-5">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-indigo-300">Evaluator Notes</p>
+                  <ul className="space-y-1 text-sm text-slate-300">
+                    {report.evaluator_notes.map((note, index) => (
+                      <li key={index}>• {note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {report?.overall_feedback && (
                 <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
                   <p className="text-xs uppercase tracking-wider text-indigo-300 font-bold mb-2">Overall Feedback</p>

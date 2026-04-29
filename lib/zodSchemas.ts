@@ -17,6 +17,7 @@ export const EvaluationSchema = z.object({
   score: z.number().min(0).max(100),
   confidence_score: z.number().min(0).max(100),
   overall_feedback: z.string().min(20),
+  evaluator_notes: z.array(z.string()).min(2).max(6),
   strengths: z.array(z.string()),
   weaknesses: z.array(z.string()),
   improvement_plan: z.array(z.string()),

@@ -66,6 +66,7 @@ Rules:
 - Reward correctness and conceptual depth
 - Penalize vague or incorrect statements
 - Provide confidence_score for overall evaluation reliability (0-100)
+- Return evaluator_notes with concrete observations on answer quality
 - Add a 7-item next_7_day_plan (one action per day)
 - For each answer include rubric scores for correctness, depth, clarity, tradeoff_awareness
 `,
@@ -96,6 +97,7 @@ Rules:
       report_json: {
         overall_feedback: object.overall_feedback,
         confidence_score: object.confidence_score,
+        evaluator_notes: object.evaluator_notes,
         strengths: object.strengths,
         weaknesses: object.weaknesses,
         improvement_plan: object.improvement_plan,
@@ -118,6 +120,7 @@ Rules:
         report_json: {
           overall_feedback: object.overall_feedback,
           confidence_score: object.confidence_score,
+          evaluator_notes: object.evaluator_notes,
           strengths: object.strengths,
           weaknesses: object.weaknesses,
           improvement_plan: object.improvement_plan,

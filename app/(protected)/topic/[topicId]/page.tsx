@@ -118,6 +118,7 @@ export default function TopicPage() {
                 { id: "data", label: "Data" },
                 { id: "ml", label: "ML" },
                 { id: "sre", label: "SRE" },
+                { id: "weakest-concept", label: "Weakest Concept Simulator" },
               ].map((option) => (
                 <button
                   key={option.id}

@@ -19,6 +19,22 @@ type QuestionItem = {
   score: number;
 };
 
+type AttemptConceptScore = {
+  concept: string;
+  score: number;
+};
+
+type AttemptQaScore = {
+  question: string;
+  score: number;
+  rubric?: {
+    correctness?: number;
+    depth?: number;
+    clarity?: number;
+    tradeoff_awareness?: number;
+  };
+};
+
 export async function generateQuestions(topicSlug: string, level: string, track: string = DEFAULT_TRACK) {
   const logger = createRequestLogger("generateQuestions");
   const user = await getCurrentUser();
@@ -35,7 +51,7 @@ export async function generateQuestions(topicSlug: string, level: string, track:
 
   const { data: latestAttempt } = await supabase
     .from("attempts")
-    .select("score, report_json")
+    .select("score, report_json, qa_json")
     .eq("user_id", user.id)
     .eq("topic_id", topic.id)
     .eq("level", parsedLevel.data)
@@ -46,14 +62,67 @@ export async function generateQuestions(topicSlug: string, level: string, track:
 
   const weakConcepts =
     latestAttempt?.report_json?.concept_scores
-      ?.filter((concept: { concept: string; score: number }) => concept.score < 75)
-      ?.map((concept: { concept: string }) => concept.concept)
+      ?.filter((concept: AttemptConceptScore) => concept.score < 75)
+      ?.map((concept: AttemptConceptScore) => concept.concept)
       ?.slice(0, 4) ?? [];
+
+  const weakestPreviousQuestions =
+    (latestAttempt?.qa_json as AttemptQaScore[] | undefined)
+      ?.slice()
+      ?.sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+      ?.slice(0, 2)
+      ?.map((item) => item.question)
+      ?.filter(Boolean) ?? [];
+
+  const weakRubricDimensions = (() => {
+    const rubricTotals = {
+      correctness: 0,
+      depth: 0,
+      clarity: 0,
+      tradeoff_awareness: 0,
+    };
+    let count = 0;
+
+    ((latestAttempt?.qa_json as AttemptQaScore[] | undefined) ?? []).forEach((item) => {
+      if (!item.rubric) return;
+      rubricTotals.correctness += item.rubric.correctness ?? 0;
+      rubricTotals.depth += item.rubric.depth ?? 0;
+      rubricTotals.clarity += item.rubric.clarity ?? 0;
+      rubricTotals.tradeoff_awareness += item.rubric.tradeoff_awareness ?? 0;
+      count += 1;
+    });
+
+    if (count === 0) return [] as string[];
+
+    return Object.entries(rubricTotals)
+      .map(([dimension, total]) => ({
+        dimension,
+        avg: Math.round(total / count),
+      }))
+      .sort((a, b) => a.avg - b.avg)
+      .slice(0, 2)
+      .map((entry) => entry.dimension);
+  })();
 
   const adaptationContext =
     latestAttempt && weakConcepts.length > 0
       ? `\nUser context: Previous score at this level was ${latestAttempt.score ?? 0}. Focus extra questions on these weaker concepts: ${weakConcepts.join(", ")}.`
       : "\nUser context: No prior weak-concept history at this level. Generate broad coverage questions.";
+
+  const followUpContext =
+    weakestPreviousQuestions.length > 0
+      ? `\nAdaptive follow-up requirement: Include at least 2 questions that are direct follow-ups to mistakes similar to these previous low-scoring prompts:\n- ${weakestPreviousQuestions.join("\n- ")}`
+      : "";
+
+  const rubricFocusContext =
+    weakRubricDimensions.length > 0
+      ? `\nAdaptive quality requirement: Prioritize question styles that improve these weak rubric dimensions: ${weakRubricDimensions.join(", ")}.`
+      : "";
+
+  const weakestConceptSimulatorContext =
+    track === "weakest-concept"
+      ? "\nMode: Weakest Concept Simulator. At least 7/10 questions must specifically target the user's weakest concepts and common errors."
+      : "";
 
   logger.info("Generating interview questions", {
     topicSlug,
@@ -81,6 +150,9 @@ Rules:
 - Increase practical depth if prior performance was strong
 - Tailor wording and examples to the selected role track
 ${adaptationContext}
+${followUpContext}
+${rubricFocusContext}
+${weakestConceptSimulatorContext}
 `,
   });
 

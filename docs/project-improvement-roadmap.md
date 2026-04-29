@@ -110,6 +110,12 @@ create index if not exists attempts_user_topic_level_created_idx
 
 ## Phase 2 — Learning Experience Differentiation (2–4 weeks)
 
+### Status snapshot (April 29, 2026)
+
+- ✅ Phase 2A shipped: answer constraints, optional voice response mode, adaptive follow-up calibration, role-based tracks + weakest concept simulator mode.
+- ✅ Phase 2B shipped: per-question rubric categories, confidence score, evaluator notes, and next 7-day study sprint.
+- ✅ Phase 2C shipped: concept mastery trend visuals, streaks, weekly summaries, completion goals, and weekly summary email draft flow.
+
 ### A. Better interview realism
 
 - Add answer constraints: minimum character count, “thinking time”, and optional voice response mode.
