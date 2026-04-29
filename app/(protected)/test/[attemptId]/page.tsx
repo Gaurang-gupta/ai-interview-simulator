@@ -178,6 +178,7 @@ export default function TestPage() {
       });
       setSubmitError(null);
     };
+  }, [attemptId]);
 
     recognition.onerror = () => {
       setVoiceError("Could not capture voice input. Please try again.");
