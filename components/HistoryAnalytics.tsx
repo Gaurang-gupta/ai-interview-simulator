@@ -33,6 +33,23 @@ type Props = {
   attempts: AttemptHistoryRow[];
 };
 
+function toNumericScore(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function prettyConceptName(name: string) {
+  return name
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export default function HistoryAnalytics({ attempts }: Props) {
   const [viewMode, setViewMode] = useState<"topic" | "combined">("topic");
 
@@ -56,7 +73,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
         if (!conceptAggregator[cs.concept]) {
           conceptAggregator[cs.concept] = { total: 0, count: 0 };
         }
-        conceptAggregator[cs.concept].total += cs.score;
+        conceptAggregator[cs.concept].total += toNumericScore(cs.score);
         conceptAggregator[cs.concept].count += 1;
       });
     });
@@ -64,6 +81,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
     return Object.entries(conceptAggregator)
       .map(([name, stats]) => ({
         name,
+        displayName: prettyConceptName(name),
         avg: Math.round(stats.total / stats.count),
       }))
       .filter((concept) => concept.avg < 75)
@@ -101,9 +119,9 @@ export default function HistoryAnalytics({ attempts }: Props) {
   const combinedBest = completedAttempts.length > 0 ? Math.max(...completedAttempts.map((attempt) => attempt.score || 0)) : 0;
 
   const studyStreakDays = useMemo(() => {
-    const uniqueDays = Array.from(
-      new Set(completedAttempts.map((attempt) => new Date(attempt.created_at).toISOString().slice(0, 10))),
-    ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    const uniqueDays = Array.from(new Set(completedAttempts.map((attempt) => attempt.created_at.slice(0, 10)))).sort((a, b) =>
+      b.localeCompare(a),
+    );
 
     if (uniqueDays.length === 0) return 0;
 
@@ -111,10 +129,14 @@ export default function HistoryAnalytics({ attempts }: Props) {
     const cursor = new Date();
     cursor.setUTCHours(0, 0, 0, 0);
 
-    for (const day of uniqueDays) {
+    for (let index = 0; index < uniqueDays.length; index += 1) {
+      const day = uniqueDays[index];
       const currentDay = new Date(day);
       currentDay.setUTCHours(0, 0, 0, 0);
       const diffDays = Math.round((cursor.getTime() - currentDay.getTime()) / (1000 * 60 * 60 * 24));
+      if (index === 0 && diffDays > 1) {
+        return 0;
+      }
       if (diffDays === 0) {
         streak += 1;
         cursor.setUTCDate(cursor.getUTCDate() - 1);
@@ -173,14 +195,15 @@ export default function HistoryAnalytics({ attempts }: Props) {
   }, [completedAttempts]);
 
   const weeklySummaryMailto = useMemo(() => {
+    const configuredTo = process.env.NEXT_PUBLIC_WEEKLY_SUMMARY_EMAIL_TO ?? "";
     const subject = encodeURIComponent("AI Prep Weekly Learning Summary");
     const body = encodeURIComponent(
       `This week I completed ${weeklySummary.attempts} interview sessions with an average score of ${weeklySummary.avgScore}%.\n` +
         `Current streak: ${studyStreakDays} day(s).\n` +
         `Weekly goal progress: ${weeklySummary.attempts}/${weeklyGoalTarget} sessions.\n` +
-        `Priority weak concepts: ${weakConcepts.map((item) => `${item.name} (${item.avg}%)`).join(", ") || "N/A"}.`,
+        `Priority weak concepts: ${weakConcepts.map((item) => `${item.displayName} (${item.avg}%)`).join(", ") || "N/A"}.`,
     );
-    return `mailto:?subject=${subject}&body=${body}`;
+    return `mailto:${configuredTo}?subject=${subject}&body=${body}`;
   }, [weeklyGoalTarget, weeklySummary.attempts, weeklySummary.avgScore, studyStreakDays, weakConcepts]);
 
   return (
@@ -210,6 +233,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
         <div className="glass rounded-2xl p-4 border-white/10">
           <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Study Streak</p>
           <p className="text-2xl font-black text-emerald-300 mt-1">{studyStreakDays} day{studyStreakDays === 1 ? "" : "s"}</p>
+          <p className="mt-1 text-[11px] text-slate-500">Consecutive calendar days with at least one completed session.</p>
         </div>
         <div className="glass rounded-2xl p-4 border-white/10">
           <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Weekly Summary</p>
@@ -225,6 +249,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
           <p className="mt-1 text-sm text-slate-300">
             {weeklySummary.attempts}/{weeklyGoalTarget} sessions this week
           </p>
+          <p className="mt-1 text-[11px] text-slate-500">This goal counts sessions in the last 7 days (not unique days).</p>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/5">
             <div className="h-full bg-indigo-500 transition-all duration-700" style={{ width: `${weeklyGoalProgress}%` }} />
           </div>
@@ -245,7 +270,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
         <div className="mb-10 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {conceptMasterySeries.map((series) => (
             <div key={series.concept} className="glass rounded-2xl border border-white/10 p-4">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">{series.concept}</p>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">{prettyConceptName(series.concept)}</p>
               <div className="h-[180px] w-full">
                 <ProgressChart
                   data={series.points.map((point) => ({
@@ -279,7 +304,7 @@ export default function HistoryAnalytics({ attempts }: Props) {
                   </div>
                   <span className="text-xl font-black text-orange-400">{concept.avg}%</span>
                 </div>
-                <h3 className="text-white font-bold text-sm leading-tight capitalize">{concept.name}</h3>
+                <h3 className="text-white font-bold text-sm leading-tight">{concept.displayName}</h3>
                 <div className="w-full bg-white/5 h-1.5 rounded-full mt-4 overflow-hidden">
                   <div className="bg-orange-500 h-full transition-all duration-1000" style={{ width: `${concept.avg}%` }} />
                 </div>
