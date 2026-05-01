@@ -1,87 +1,108 @@
 "use client";
 
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    CartesianGrid,
-    ResponsiveContainer,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type Props = {
-    data: { attempt: number; score: number; label: string }[];
+  data: { attempt: number; score: number; label: string }[];
 };
 
 export default function ProgressChart({ data }: Props) {
-    // Ensure we have data or a fallback to prevent render issues
-    if (!data || data.length === 0) {
-        return (
-            <div className="h-full w-full flex items-center justify-center text-slate-500 text-sm italic">
-                No data available for this trend.
-            </div>
-        );
-    }
-
+  if (!data || data.length === 0) {
     return (
-        // The key is having a defined height on this parent wrapper
-        <div className="w-full h-full min-h-[250px] min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <LineChart data={data} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
-                    <defs>
-                        <linearGradient id="scoreGradient" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#6366f1" />
-                            <stop offset="100%" stopColor="#a855f7" />
-                        </linearGradient>
-                    </defs>
-
-                    <CartesianGrid
-                        vertical={false}
-                        stroke="rgba(255,255,255,0.05)"
-                        strokeDasharray="4 4"
-                    />
-
-                    <XAxis
-                        dataKey="attempt"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#475569', fontSize: 11 }}
-                        dy={10}
-                    />
-
-                    <YAxis
-                        domain={[0, 100]}
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#475569', fontSize: 11 }}
-                    />
-
-                    <Tooltip
-                        labelFormatter={(value) => `Attempt ${value}`}
-                        formatter={(value, _name, payload) => [
-                            `${typeof value === "number" ? value : 0}%`,
-                            String(payload?.payload?.label ?? "Score"),
-                        ]}
-                        contentStyle={{
-                            backgroundColor: '#0f172a',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '8px',
-                            fontSize: '12px'
-                        }}
-                    />
-
-                    <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke="url(#scoreGradient)"
-                        strokeWidth={3}
-                        dot={{ fill: '#818cf8', r: 3, strokeWidth: 1, stroke: '#030712' }}
-                        activeDot={{ r: 5, fill: '#fff' }}
-                        animationDuration={1000}
-                    />
-                </LineChart>
-            </ResponsiveContainer>
-        </div>
+      <div className="h-full w-full flex items-center justify-center text-slate-500 text-xs italic">
+        No data available
+      </div>
     );
+  }
+
+  return (
+    // Ensure the outer div has a physical height and relative positioning
+    <div className="relative w-full h-full min-h-[150px]">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={0}
+        minHeight={0}
+      >
+        {/* We use a unique key based on data length to force Recharts to recalculate sizing */}
+        <LineChart
+          key={`chart-${data.length}`}
+          data={data}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid
+            vertical={false}
+            stroke="rgba(255,255,255,0.05)"
+            strokeDasharray="3 3"
+          />
+
+          <XAxis
+            dataKey="attempt"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#64748b", fontSize: 10, fontWeight: 600 }}
+            dy={10}
+            padding={{ left: 10, right: 10 }}
+          />
+
+          <YAxis
+            domain={[0, 100]}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#64748b", fontSize: 10 }}
+            ticks={[0, 50, 100]} // Simplified ticks for cleaner look
+          />
+
+          <Tooltip
+            cursor={{
+              stroke: "#6366f1",
+              strokeWidth: 1,
+              strokeDasharray: "4 4",
+            }}
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                return (
+                  <div className="bg-slate-950 border border-white/10 p-2 rounded-lg shadow-xl">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">
+                      {payload[0].payload.label}
+                    </p>
+                    <p className="text-sm font-black text-white">
+                      Score:{" "}
+                      <span className="text-indigo-400">
+                        {payload[0].value}%
+                      </span>
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
+
+          <Line
+            type="monotone"
+            dataKey="score"
+            stroke="#818cf8"
+            strokeWidth={3}
+            dot={{ fill: "#1e293b", stroke: "#818cf8", strokeWidth: 2, r: 4 }}
+            activeDot={{
+              r: 6,
+              fill: "#fff",
+              stroke: "#6366f1",
+              strokeWidth: 2,
+            }}
+            animationDuration={1500}
+            connectNulls
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }

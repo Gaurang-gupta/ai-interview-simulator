@@ -15,6 +15,7 @@ export async function signUp(formData: FormData) {
     });
 
     if (error) {
+        console.log(error);
         console.error("Signup error:", error.message);
         redirect("/signup?error=Signup failed");
     }
@@ -34,6 +35,7 @@ export async function signIn(formData: FormData) {
     });
 
     if (error) {
+        console.log(error);
         console.error("Login error:", error.message);
         redirect("/login?error=Invalid credentials");
     }

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { generateQuestions } from "@/actions/generateQuestions";
 import { getLevelStatus } from "@/actions/getLevelStatus";
-import { ArrowLeft, Trophy, Lock, Zap, Star, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, Star, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
 
 type LevelStatus = {
@@ -84,7 +84,10 @@ export default function TopicPage() {
             href="/dashboard"
             className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors group"
           >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft
+              size={20}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
             Back to Dashboard
           </Link>
 
@@ -93,14 +96,19 @@ export default function TopicPage() {
               <h1 className="text-4xl md:text-5xl font-extrabold text-white capitalize tracking-tight">
                 {topicSlug.replace("-", " ")}
               </h1>
-              <p className="text-slate-400 mt-2 text-lg">Challenge yourself and move up the ranks.</p>
+              <p className="text-slate-400 mt-2 text-lg">
+                Challenge yourself and move up the ranks.
+              </p>
             </div>
 
             <div className="glass px-6 py-3 rounded-2xl flex items-center gap-4">
               <div className="text-right">
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">Progress</p>
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">
+                  Progress
+                </p>
                 <p className="text-white font-semibold">
-                  Level {levels.advanced ? "3" : levels.intermediate ? "2" : "1"} of 3
+                  Level{" "}
+                  {levels.advanced ? "3" : levels.intermediate ? "2" : "1"} of 3
                 </p>
               </div>
             </div>
@@ -109,7 +117,9 @@ export default function TopicPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-slide-up">
           <div className="md:col-span-3 glass rounded-3xl p-6 border-white/10">
-            <p className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-3">Interview Track</p>
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-3">
+              Choose your Interview Track
+            </p>
             <div className="flex flex-wrap gap-3">
               {[
                 { id: "general", label: "General" },
@@ -118,7 +128,6 @@ export default function TopicPage() {
                 { id: "data", label: "Data" },
                 { id: "ml", label: "ML" },
                 { id: "sre", label: "SRE" },
-                { id: "weakest-concept", label: "Weakest Concept Simulator" },
               ].map((option) => (
                 <button
                   key={option.id}
@@ -142,7 +151,9 @@ export default function TopicPage() {
                   ? "glass p-8 cursor-pointer hover:scale-[1.02] hover:bg-white/[0.05] hover:border-white/20"
                   : "bg-white/[0.02] border border-white/5 p-8 opacity-60 grayscale"
               }`}
-              onClick={() => lvl.unlocked && !loadingLevel && handleStart(lvl.id)}
+              onClick={() =>
+                lvl.unlocked && !loadingLevel && handleStart(lvl.id)
+              }
             >
               {!lvl.unlocked && (
                 <div className="absolute top-6 right-6 text-slate-500">
@@ -158,14 +169,20 @@ export default function TopicPage() {
                 {lvl.icon}
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-2">{lvl.label}</h3>
-              <p className="text-slate-400 text-sm leading-relaxed mb-8">{lvl.desc}</p>
+              <h3 className="text-2xl font-bold text-white mb-2">
+                {lvl.label}
+              </h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                {lvl.desc}
+              </p>
 
               <div className="mt-auto">
                 {lvl.unlocked ? (
                   <button
                     className={`w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
-                      loadingLevel === lvl.id ? "bg-slate-700 text-slate-300" : "bg-indigo-600 text-white hover:bg-indigo-500"
+                      loadingLevel === lvl.id
+                        ? "bg-slate-700 text-slate-300"
+                        : "bg-indigo-600 text-white hover:bg-indigo-500"
                     }`}
                   >
                     {loadingLevel === lvl.id ? (

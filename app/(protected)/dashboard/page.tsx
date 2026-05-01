@@ -6,7 +6,14 @@ import { getTopics } from "@/actions/getTopics";
 import { useEffect, useState } from "react";
 import type { TopicRecord } from "@/lib/topics";
 import { getTopicIcon } from "@/lib/topicCatalog";
-import { LogOut, History, Zap, ChevronRight, PlusCircle, Loader2 } from "lucide-react";
+import {
+  ChevronRight,
+  History,
+  Loader2,
+  LogOut,
+  PlusCircle,
+  Zap,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const [topics, setTopics] = useState<TopicRecord[]>([]);
@@ -23,7 +30,9 @@ export default function DashboardPage() {
       <nav className="border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">A</div>
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">
+              A
+            </div>
             <span className="font-bold tracking-tight text-white">AI PREP</span>
           </div>
 
@@ -49,7 +58,9 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-6 pt-12">
         <header className="mb-12 animate-fade-in">
           <h1 className="text-4xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-slate-400">Select a topic to generate a new AI-driven assessment.</p>
+          <p className="text-slate-400">
+            Select a topic to generate a new AI-driven assessment.
+          </p>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
@@ -58,7 +69,9 @@ export default function DashboardPage() {
               <Zap size={24} />
             </div>
             <div>
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Ready to Start</p>
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
+                Ready to Start
+              </p>
               <p className="text-white font-semibold">10 Fresh Questions</p>
             </div>
           </div>
@@ -72,7 +85,11 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {topics.map((topic, index) => (
-              <Link key={topic.slug} href={`/topic/${topic.slug}`} className="group">
+              <Link
+                key={topic.slug}
+                href={`/topic/${topic.slug}`}
+                className="group"
+              >
                 <div
                   className="glass h-full p-8 rounded-3xl transition-all duration-300 group-hover:scale-[1.02] group-hover:bg-white/[0.05] group-hover:border-white/20 relative overflow-hidden"
                   style={{ animationDelay: `${index * 100}ms` }}
@@ -91,7 +108,10 @@ export default function DashboardPage() {
                     />
                   </h2>
 
-                  <p className="text-slate-400 leading-relaxed">{topic.description || "Sharpen this topic with AI-guided practice."}</p>
+                  <p className="text-slate-400 leading-relaxed">
+                    {topic.description ||
+                      "Sharpen this topic with AI-guided practice."}
+                  </p>
 
                   <div className="mt-8 flex items-center gap-2 text-sm font-medium text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     <PlusCircle size={16} />

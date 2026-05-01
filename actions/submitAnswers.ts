@@ -7,7 +7,7 @@ import { generateObject } from "ai";
 import { AnswersSchema, EvaluationSchema } from "@/lib/zodSchemas";
 import { createRequestLogger } from "@/lib/logger";
 
-const EVALUATION_MODEL = "gemini-2.5-flash";
+const EVALUATION_MODEL = "gemini-3.1-flash-lite-preview"; //"gemini-2.5-flash"
 const EVALUATION_PROMPT_VERSION = "v1";
 
 type AttemptQuestionRow = {
