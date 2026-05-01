@@ -1,12 +1,11 @@
 "use client";
 
 import ProgressChart from "@/components/ProgressChart";
-import { AlertTriangle, Brain, ChevronRight, Loader2, Mail, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Brain, ChevronRight, Target, TrendingUp } from "lucide-react";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase_client";
-import { sendWeeklyReport } from "@/actions/sendEmail";
 
 type ConceptScore = {
   concept: string;
@@ -243,28 +242,6 @@ export default function HistoryAnalytics({ attempts }: Props) {
       .slice(0, 3);
   }, [completedAttempts]);
 
-  const handleSendEmail = async () => {
-    if (!recipientEmail) return;
-
-    setIsSending(true);
-    const stats = {
-      attempts: weeklySummary.attempts,
-      avgScore: weeklySummary.avgScore,
-      streak: studyStreakDays,
-      gaps: weakConcepts,
-    };
-
-    const result = await sendWeeklyReport(recipientEmail, stats);
-    console.log(result);
-
-    setIsSending(false);
-    if (result.success) {
-      alert("Report sent to your inbox!");
-    } else {
-      alert("Failed to send email.");
-    }
-  };
-
   return (
     <>
       <div className="mb-8 flex items-center justify-end">
@@ -340,54 +317,6 @@ export default function HistoryAnalytics({ attempts }: Props) {
               style={{ width: `${weeklyGoalProgress}%` }}
             />
           </div>
-        </div>
-
-        <div className="glass rounded-2xl p-4 border-white/10 bg-gradient-to-br from-indigo-500/5 to-transparent hover:border-indigo-500/20 transition-all group">
-          <div className="flex justify-between items-start">
-            <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-              Weekly Progress Report
-            </p>
-            <div className="bg-indigo-500/10 p-1.5 rounded-lg text-indigo-400 opacity-50 group-hover:opacity-100 transition-opacity">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m22 2-7 20-4-9-9-4Z" />
-                <path d="M22 2 11 13" />
-              </svg>
-            </div>
-          </div>
-
-          <p className="mt-1 text-sm text-slate-300 font-medium">
-            Share your progress
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-            Generate a formatted summary of your mastery trends to share with a
-            mentor or for your own records.
-          </p>
-
-          <button
-            onClick={handleSendEmail}
-            disabled={isSending || !recipientEmail}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all mt-2 w-full ${
-              recipientEmail && !isSending
-                ? "bg-indigo-500 text-white hover:bg-indigo-400"
-                : "bg-white/5 text-slate-600 cursor-not-allowed"
-            }`}
-          >
-            {isSending ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Mail size={14} />
-            )}
-            {isSending ? "Sending..." : "Send Report"}
-          </button>
         </div>
       </div>
 

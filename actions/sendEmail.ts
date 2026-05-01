@@ -16,10 +16,11 @@ type StatType = {
 };
 
 export async function sendWeeklyReport(email: string, stats: StatType) {
+  console.log(email);
   try {
     const { data, error } = await resend.emails.send({
-      from: "AI Prep <onboarding@resend.dev>", // Use your verified domain here later
-      to: [email],
+      from: "onboarding@resend.dev", // Use your verified domain here later
+      to: "gaurangfirebase@gmail.com",
       subject: `Learning Progress Report: ${new Date().toLocaleDateString()}`,
       html: `
         <h1>Weekly Performance Summary</h1>
