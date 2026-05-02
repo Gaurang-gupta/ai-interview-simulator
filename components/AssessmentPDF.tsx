@@ -143,7 +143,7 @@ export const AssessmentPDF = ({ attempt }: { attempt: ReplayAttempt }) => (
       <View style={styles.header}>
         <Text style={styles.title}>Technical Assessment Report</Text>
         <Text style={styles.subtitle}>
-          {attempt.topics.name} • {attempt.level} Level •{" "}
+          {attempt.topics.name} • {attempt.level} Level • {attempt.track} •{" "}
           {new Date().toLocaleDateString()}
         </Text>
       </View>

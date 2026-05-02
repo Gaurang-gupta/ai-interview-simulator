@@ -71,4 +71,5 @@ export type ReplayAttempt = {
   };
   score: number;
   level: string;
+  track: string;
 };

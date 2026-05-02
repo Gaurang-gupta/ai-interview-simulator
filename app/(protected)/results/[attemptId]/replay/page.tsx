@@ -25,13 +25,13 @@ export default async function ReplayPage({
     notFound();
   }
 
-  const { report_json, qa_json, topics, score, level } = attempt;
+  const { report_json, qa_json, topics, score, level, track } = attempt;
 
   return (
     <main className="min-h-screen bg-[#050505] text-white py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <ReplayClientView
-          attempt={{ report_json, qa_json, topics, score, level }}
+          attempt={{ report_json, qa_json, topics, score, level, track }}
         />
       </div>
     </main>

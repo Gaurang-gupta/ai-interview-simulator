@@ -35,7 +35,11 @@ type AttemptQaScore = {
   };
 };
 
-export async function generateQuestions(topicSlug: string, level: string, track: string = DEFAULT_TRACK) {
+export async function generateQuestions(
+  topicSlug: string,
+  level: string,
+  track: string = DEFAULT_TRACK,
+) {
   const logger = createRequestLogger("generateQuestions");
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
@@ -83,14 +87,16 @@ export async function generateQuestions(topicSlug: string, level: string, track:
     };
     let count = 0;
 
-    ((latestAttempt?.qa_json as AttemptQaScore[] | undefined) ?? []).forEach((item) => {
-      if (!item.rubric) return;
-      rubricTotals.correctness += item.rubric.correctness ?? 0;
-      rubricTotals.depth += item.rubric.depth ?? 0;
-      rubricTotals.clarity += item.rubric.clarity ?? 0;
-      rubricTotals.tradeoff_awareness += item.rubric.tradeoff_awareness ?? 0;
-      count += 1;
-    });
+    ((latestAttempt?.qa_json as AttemptQaScore[] | undefined) ?? []).forEach(
+      (item) => {
+        if (!item.rubric) return;
+        rubricTotals.correctness += item.rubric.correctness ?? 0;
+        rubricTotals.depth += item.rubric.depth ?? 0;
+        rubricTotals.clarity += item.rubric.clarity ?? 0;
+        rubricTotals.tradeoff_awareness += item.rubric.tradeoff_awareness ?? 0;
+        count += 1;
+      },
+    );
 
     if (count === 0) return [] as string[];
 
@@ -161,6 +167,7 @@ ${weakestConceptSimulatorContext}
   const payload = {
     user_id: user.id,
     topic_id: topic.id,
+    track: track,
     topic_slug_snapshot: topic.slug,
     level: parsedLevel.data,
     status: "in_progress",
@@ -180,13 +187,16 @@ ${weakestConceptSimulatorContext}
           name: "attempt_started",
           timestamp: new Date().toISOString(),
           request_id: logger.requestId,
-          track,
         },
       ],
     },
   };
 
-  let { data, error } = await supabase.from("attempts").insert(payload).select("id").single();
+  let { data, error } = await supabase
+    .from("attempts")
+    .insert(payload)
+    .select("id")
+    .single();
 
   if (error?.code === "42703") {
     ({ data, error } = await supabase
@@ -220,7 +230,9 @@ ${weakestConceptSimulatorContext}
   });
 
   if (eventError) {
-    logger.warn("Failed to persist attempt_started event", { error: eventError.message });
+    logger.warn("Failed to persist attempt_started event", {
+      error: eventError.message,
+    });
   }
 
   return {

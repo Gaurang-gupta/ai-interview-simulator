@@ -6,7 +6,14 @@ import { getTopics } from "@/actions/getTopics";
 import { useEffect, useState } from "react";
 import { TopicRecord } from "@/types";
 import { getTopicIcon } from "@/lib/topicCatalog";
-import { ChevronRight, History, Loader2, LogOut, PlusCircle, Zap } from "lucide-react";
+import {
+  ChevronRight,
+  History,
+  Loader2,
+  LogOut,
+  PlusCircle,
+  Zap,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const [topics, setTopics] = useState<TopicRecord[]>([]);

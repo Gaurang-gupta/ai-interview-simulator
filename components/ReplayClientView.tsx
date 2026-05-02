@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   Lightbulb,
   Target,
-  Trophy,
+  Trophy
 } from "lucide-react";
 import { ReplayAttempt } from "@/types";
 import PDFDownloadButton from "@/components/PDFDownloadButton";
@@ -40,7 +40,7 @@ export default function ReplayClientView({
 }: {
   attempt: ReplayAttempt;
 }) {
-  const { report_json, qa_json, topics, score, level } = attempt;
+  const { report_json, qa_json, topics, score, level, track } = attempt;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -91,6 +91,16 @@ export default function ReplayClientView({
               </span>
               <span className="text-sm font-bold text-indigo-400 capitalize">
                 {level}
+              </span>
+            </div>
+
+            {/* track */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                Track
+              </span>
+              <span className="text-sm font-bold text-indigo-400 capitalize">
+                {track}
               </span>
             </div>
           </div>

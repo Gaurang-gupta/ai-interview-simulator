@@ -6,6 +6,7 @@ import { generateQuestions } from "@/actions/generateQuestions";
 import { getLevelStatus } from "@/actions/getLevelStatus";
 import { ArrowLeft, Loader2, Lock, Star, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
+import { interviewTracks } from "@/constants/topicList";
 
 type LevelStatus = {
   beginner: boolean;
@@ -121,14 +122,7 @@ export default function TopicPage() {
               Choose your Interview Track
             </p>
             <div className="flex flex-wrap gap-3">
-              {[
-                { id: "general", label: "General" },
-                { id: "backend", label: "Backend" },
-                { id: "frontend", label: "Frontend" },
-                { id: "data", label: "Data" },
-                { id: "ml", label: "ML" },
-                { id: "sre", label: "SRE" },
-              ].map((option) => (
+              {interviewTracks.map((option) => (
                 <button
                   key={option.id}
                   onClick={() => setTrack(option.id)}
