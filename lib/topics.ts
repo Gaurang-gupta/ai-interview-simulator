@@ -1,15 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase_server";
 import { fallbackBySlug, fallbackTopics, inferSlugFromTopicName } from "@/lib/topicCatalog";
-
-export type TopicRecord = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  icon_key?: string | null;
-  is_active?: boolean | null;
-  sort_order?: number | null;
-};
+import { TopicRecord } from "@/types";
 
 function buildFallbackTopic(slug: string): TopicRecord | null {
   const fallback = fallbackBySlug(slug);
@@ -26,7 +17,9 @@ function buildFallbackTopic(slug: string): TopicRecord | null {
   };
 }
 
-export async function getTopicBySlug(slug: string): Promise<TopicRecord | null> {
+export async function getTopicBySlug(
+  slug: string,
+): Promise<TopicRecord | null> {
   const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase
@@ -49,9 +42,14 @@ export async function getTopicBySlug(slug: string): Promise<TopicRecord | null> 
   }
 
   if (error?.code === "42703") {
-    const { data: legacyData } = await supabase.from("topics").select("id, name").order("name", { ascending: true });
+    const { data: legacyData } = await supabase
+      .from("topics")
+      .select("id, name")
+      .order("name", { ascending: true });
     const matched = legacyData?.find((topic) => {
-      const inferredSlug = inferSlugFromTopicName(topic.name) ?? topic.name.toLowerCase().replace(/\s+/g, "-");
+      const inferredSlug =
+        inferSlugFromTopicName(topic.name) ??
+        topic.name.toLowerCase().replace(/\s+/g, "-");
       return inferredSlug === slug;
     });
 
@@ -83,10 +81,15 @@ export async function getActiveTopics(): Promise<TopicRecord[]> {
     .order("name", { ascending: true });
 
   if (error?.code === "42703") {
-    const { data: legacyData } = await supabase.from("topics").select("id, name").order("name", { ascending: true });
+    const { data: legacyData } = await supabase
+      .from("topics")
+      .select("id, name")
+      .order("name", { ascending: true });
     if (legacyData && legacyData.length > 0) {
       return legacyData.map((topic, index) => {
-        const inferredSlug = inferSlugFromTopicName(topic.name) ?? topic.name.toLowerCase().replace(/\s+/g, "-");
+        const inferredSlug =
+          inferSlugFromTopicName(topic.name) ??
+          topic.name.toLowerCase().replace(/\s+/g, "-");
         const fallback = fallbackBySlug(inferredSlug);
         return {
           id: topic.id,
@@ -124,7 +127,9 @@ export async function getActiveTopics(): Promise<TopicRecord[]> {
   }));
 }
 
-export async function getTopicSlugById(topicId: string): Promise<string | null> {
+export async function getTopicSlugById(
+  topicId: string,
+): Promise<string | null> {
   const supabase = await createServerSupabaseClient();
 
   const { data } = await supabase

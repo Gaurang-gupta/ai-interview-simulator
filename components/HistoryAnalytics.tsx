@@ -1,7 +1,13 @@
 "use client";
 
 import ProgressChart from "@/components/ProgressChart";
-import { AlertTriangle, Brain, ChevronRight, Target, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  Brain,
+  ChevronRight,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";

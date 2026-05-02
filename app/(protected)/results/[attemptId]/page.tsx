@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Gauge,
   Lightbulb,
+  PlayIcon,
   RefreshCw,
   StickyNote,
   Target,
@@ -16,30 +17,7 @@ import {
 import Link from "next/link";
 import ScoreCircle from "@/components/ScoreCircle";
 import { notFound } from "next/navigation";
-
-// --- Types ---
-type ConceptScore = {
-  concept: string;
-  score: number;
-};
-
-type ReportJson = {
-  overall_feedback?: string;
-  confidence_score?: number;
-  evaluator_notes?: string[];
-  strengths?: string[];
-  weaknesses?: string[];
-  concept_scores?: ConceptScore[];
-  improvement_plan?: string[];
-  next_7_day_plan?: string[];
-};
-
-type AttemptResult = {
-  score: number;
-  report_json: ReportJson;
-  topic_slug_snapshot: string | null;
-  topics: { name: string } | { name: string }[] | null;
-};
+import { AttemptResult } from "@/types";
 
 export default async function ResultsPage({
   params,
@@ -282,6 +260,24 @@ export default async function ResultsPage({
                   className="group-hover:rotate-180 transition-transform duration-700"
                 />
                 Retry Lab
+              </span>
+              <ChevronRight
+                size={20}
+                className="relative z-10 group-hover:translate-x-1 transition-transform"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            </Link>
+
+            <Link
+              href={`/results/${attemptId}/replay`}
+              className="group flex items-center justify-between w-full p-6 rounded-3xl bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-indigo-500/20 overflow-hidden relative"
+            >
+              <span className="relative z-10 flex items-center gap-3 text-sm">
+                <PlayIcon
+                  size={18}
+                  className="group-hover:rotate-180 transition-transform duration-700"
+                />
+                Replay
               </span>
               <ChevronRight
                 size={20}

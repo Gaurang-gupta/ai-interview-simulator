@@ -2,25 +2,7 @@ import { getAttemptsWithTopicNames } from "@/actions/getAttempts";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import HistoryAnalytics from "@/components/HistoryAnalytics";
-
-type AttemptHistoryRow = {
-  id: string;
-  score: number | null;
-  level: string;
-  status: string;
-  created_at: string;
-  report_json: {
-    concept_scores?: { concept: string; score: number }[];
-  } | null;
-  topics?:
-    | {
-        name?: string;
-      }
-    | {
-        name?: string;
-      }[]
-    | null;
-};
+import { AttemptHistoryRow } from "@/types";
 
 export default async function HistoryPage() {
   const attempts = (await getAttemptsWithTopicNames()) as AttemptHistoryRow[];

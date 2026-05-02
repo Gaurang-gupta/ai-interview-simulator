@@ -28,7 +28,9 @@ export async function submitAnswers(attemptId: string, answers: string[]) {
 
   const parsedAnswers = AnswersSchema.safeParse(answers);
   if (!parsedAnswers.success) {
-    throw new Error(parsedAnswers.error.issues[0]?.message ?? "Invalid answers");
+    throw new Error(
+      parsedAnswers.error.issues[0]?.message ?? "Invalid answers",
+    );
   }
 
   const supabase = await createServerSupabaseClient();
@@ -49,7 +51,7 @@ export async function submitAnswers(attemptId: string, answers: string[]) {
 
   const questions = typedAttempt.qa_json.map((row) => row.question);
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model: google(EVALUATION_MODEL),
     schema: EvaluationSchema,
     prompt: `
@@ -74,7 +76,10 @@ Rules:
 
   const now = new Date();
   const started = new Date(typedAttempt.created_at);
-  const durationSeconds = Math.max(0, Math.round((now.getTime() - started.getTime()) / 1000));
+  const durationSeconds = Math.max(
+    0,
+    Math.round((now.getTime() - started.getTime()) / 1000),
+  );
 
   const analyticsEvents = [
     {
@@ -82,6 +87,7 @@ Rules:
       timestamp: now.toISOString(),
       request_id: logger.requestId,
       duration_seconds: durationSeconds,
+      total_tokens: usage.totalTokens,
     },
   ];
 
@@ -104,7 +110,13 @@ Rules:
         next_7_day_plan: object.next_7_day_plan,
         concept_scores: object.concept_scores,
       },
-      qa_json: object.qa_feedback,
+      qa_json: object.qa_feedback.map((feedback, i) => ({
+        feedback: feedback.feedback,
+        score: feedback.score,
+        rubric: feedback.rubric,
+        question: questions[i],
+        answer: answers[i],
+      })),
       analytics_json: {
         events: analyticsEvents,
       },
@@ -146,7 +158,9 @@ Rules:
   });
 
   if (eventError) {
-    logger.warn("Failed to persist attempt_completed event", { error: eventError.message });
+    logger.warn("Failed to persist attempt_completed event", {
+      error: eventError.message,
+    });
   }
 
   return object;
