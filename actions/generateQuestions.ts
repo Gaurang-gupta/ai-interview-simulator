@@ -8,7 +8,7 @@ import { LevelSchema, QuestionSchema } from "@/lib/zodSchemas";
 import { getTopicBySlug } from "@/lib/topics";
 import { createRequestLogger } from "@/lib/logger";
 
-const QUESTION_MODEL = "gemini-2.5-flash";
+const QUESTION_MODEL = "gemini-3.1-flash-lite-preview";
 const QUESTION_PROMPT_VERSION = "v1";
 const DEFAULT_TRACK = "general";
 

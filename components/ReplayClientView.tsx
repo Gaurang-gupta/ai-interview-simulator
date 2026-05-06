@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   Lightbulb,
   Target,
-  Trophy
+  Trophy,
 } from "lucide-react";
 import { ReplayAttempt } from "@/types";
 import PDFDownloadButton from "@/components/PDFDownloadButton";
@@ -40,7 +40,15 @@ export default function ReplayClientView({
 }: {
   attempt: ReplayAttempt;
 }) {
-  const { report_json, qa_json, topics, score, level, track } = attempt;
+  const {
+    report_json,
+    qa_json,
+    topics,
+    score,
+    level,
+    track,
+    duration_seconds,
+  } = attempt;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -50,6 +58,27 @@ export default function ReplayClientView({
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
+  };
+
+  const durationModifier = () => {
+    const seconds = duration_seconds % 60;
+    const minutes = (duration_seconds - seconds) / 60;
+    const hours = duration_seconds / (60 * 60);
+
+    let finalString = "";
+    if (hours > 1) {
+      if (hours < 10) finalString += `0${hours}:`;
+      else finalString += `${hours}:`;
+    }
+    if (minutes > 0) {
+      if (minutes < 10) finalString += `0${minutes}:`;
+      else finalString += `${minutes}:`;
+    }
+    if (seconds > 0) {
+      if (seconds < 10) finalString += `0${seconds}`;
+      else finalString += `${seconds}`;
+    }
+    return finalString;
   };
 
   return (
@@ -81,9 +110,6 @@ export default function ReplayClientView({
               </span>
             </div>
 
-            {/* Separator Dot (Hidden on mobile) */}
-            <div className="hidden md:block w-1 h-1 rounded-full bg-slate-800" />
-
             {/* Level Badge */}
             <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -94,6 +120,9 @@ export default function ReplayClientView({
               </span>
             </div>
 
+            {/* Separator Dot (Hidden on mobile) */}
+            <div className="hidden md:block w-1 h-1 rounded-full bg-slate-800" />
+
             {/* track */}
             <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -101,6 +130,15 @@ export default function ReplayClientView({
               </span>
               <span className="text-sm font-bold text-indigo-400 capitalize">
                 {track}
+              </span>
+            </div>
+            {/* track */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/10">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                Time taken
+              </span>
+              <span className="text-sm font-bold text-indigo-400 capitalize">
+                {durationModifier()}
               </span>
             </div>
           </div>

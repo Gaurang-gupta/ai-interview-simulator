@@ -2,15 +2,7 @@
 
 import { submitAnswers } from "@/actions/submitAnswers";
 import { createClient } from "@/lib/supabase_client";
-import {
-  AlertCircle,
-  BrainCircuit,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Timer,
-} from "lucide-react";
+import { AlertCircle, BrainCircuit, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Timer } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -41,6 +33,7 @@ export default function TestPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [completedAt, setCompletedAt] = useState<number | null>(null);
 
   // 1. Fetch Questions on Mount
   useEffect(() => {
@@ -81,7 +74,7 @@ export default function TestPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [loadState, startedAt]);
+  }, [loadState, startedAt, completedAt]);
 
   const updateCurrentAnswer = (val: string) => {
     setAnswers((prev) => {
@@ -111,8 +104,11 @@ export default function TestPage() {
     }
 
     setIsSubmitting(true);
+    const finalTime = Math.floor((Date.now() - (startedAt ?? 0)) / 1000);
+    setCompletedAt(Date.now());
+    setElapsedSeconds(finalTime);
     try {
-      await submitAnswers(attemptId, answers);
+      await submitAnswers(attemptId, answers, finalTime);
       router.push(`/results/${attemptId}`);
     } catch {
       setSubmitError("Submission failed. Please check your connection.");

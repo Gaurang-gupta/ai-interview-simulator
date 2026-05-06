@@ -21,7 +21,11 @@ type AttemptRecord = {
   qa_json: AttemptQuestionRow[];
 };
 
-export async function submitAnswers(attemptId: string, answers: string[]) {
+export async function submitAnswers(
+  attemptId: string,
+  answers: string[],
+  finalTime: number,
+) {
   const logger = createRequestLogger("submitAnswers");
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
@@ -70,7 +74,7 @@ Rules:
 - Provide confidence_score for overall evaluation reliability (0-100)
 - Return evaluator_notes with concrete observations on answer quality
 - Add a 7-item next_7_day_plan (one action per day)
-- For each answer include rubric scores for correctness, depth, clarity, tradeoff_awareness
+- For each answer include rubric scores for correctness, depth, clarity, tradeoff_awareness. Range of each score is from 0 to 100.
 `,
   });
 
@@ -97,7 +101,7 @@ Rules:
       status: "completed",
       score: Math.round(object.score),
       completed_at: now.toISOString(),
-      duration_seconds: durationSeconds,
+      duration_seconds: finalTime,
       model_name: EVALUATION_MODEL,
       prompt_version: EVALUATION_PROMPT_VERSION,
       report_json: {

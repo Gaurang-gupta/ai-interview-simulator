@@ -1,19 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { signOut } from "@/actions/authActions";
 import { getTopics } from "@/actions/getTopics";
 import { useEffect, useState } from "react";
 import { TopicRecord } from "@/types";
 import { getTopicIcon } from "@/lib/topicCatalog";
-import {
-  ChevronRight,
-  History,
-  Loader2,
-  LogOut,
-  PlusCircle,
-  Zap,
-} from "lucide-react";
+import { ChevronRight, Loader2, PlusCircle, Trophy, Zap } from "lucide-react";
 
 export default function DashboardPage() {
   const [topics, setTopics] = useState<TopicRecord[]>([]);
@@ -27,34 +19,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <nav className="border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">
-              A
-            </div>
-            <span className="font-bold tracking-tight text-white">AI PREP</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/history"
-              className="text-sm font-medium text-slate-400 hover:text-white transition-colors flex items-center gap-2"
-            >
-              <History size={16} />
-              History
-            </Link>
-            <button
-              onClick={() => signOut()}
-              className="p-2 rounded-lg bg-white/5 text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all border border-white/5"
-              title="Sign Out"
-            >
-              <LogOut size={18} />
-            </button>
-          </div>
-        </div>
-      </nav>
-
       <main className="max-w-7xl mx-auto px-6 pt-12">
         <header className="mb-12 animate-fade-in">
           <h1 className="text-4xl font-bold text-white mb-2">Welcome Back</h1>
@@ -75,6 +39,29 @@ export default function DashboardPage() {
               <p className="text-white font-semibold">10 Fresh Questions</p>
             </div>
           </div>
+          {/* NEW: Leaderboard Shortcut Card */}
+          <Link href="/leaderboard" className="group">
+            <div className="glass p-4 rounded-2xl flex items-center gap-4 border-amber-500/10 hover:border-amber-500/30 transition-all hover:bg-amber-500/[0.02]">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                <Trophy size={24} />{" "}
+                {/* Ensure Trophy is imported from lucide-react */}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
+                  Competitive Rank
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-semibold">
+                    Global Hall of Fame
+                  </p>
+                  <ChevronRight
+                    size={14}
+                    className="text-slate-600 group-hover:text-amber-500 group-hover:translate-x-1 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          </Link>
         </div>
 
         {loading ? (
