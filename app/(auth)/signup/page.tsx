@@ -83,7 +83,7 @@ export default function SignupPage() {
                 href="/login"
                 className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
               >
-                Sign in instead
+                Sign In Instead
               </Link>
             </p>
           </div>
